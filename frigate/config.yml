@@ -1,0 +1,52 @@
+# Frigate config for Gym Instant Replay (schema: 0.17.x)
+#
+# Strategy: record continuously, detect nothing. The button doesn't create an
+# "event" - the receiver asks Frigate to EXPORT the last 10 minutes of the
+# continuous recording. That's why continuous.days must be >= 1.
+
+mqtt:
+  enabled: false
+
+# No object detection needed. Frigate still decodes one stream for previews,
+# so keep the detect resolution low to keep CPU down.
+detectors:
+  cpu1:
+    type: cpu
+
+cameras:
+  mat_camera:
+    ffmpeg:
+      inputs:
+        # Replace with the iM5 SC's real RTSP URL. If the password contains
+        # @ : / or #, percent-encode it (@ -> %40).
+        - path: rtsp://USUARIO:SENHA@CAMERA_IP:554/onvif1
+          roles:
+            - record
+            - detect
+      # Tolerate the camera dropping off gym Wi-Fi for a moment.
+      input_args: preset-rtsp-generic
+      output_args:
+        record: preset-record-generic
+    detect:
+      enabled: false      # no object detection for this project
+      width: 640
+      height: 360
+      fps: 5
+    motion:
+      enabled: false      # nothing on a jiu-jitsu mat is "not motion"
+    snapshots:
+      enabled: false
+    record:
+      enabled: true
+      continuous:
+        days: 3           # <- the rolling buffer the export pulls from
+      alerts:
+        retain:
+          days: 0
+      detections:
+        retain:
+          days: 0
+      export:
+        timelapse_args: "-vf setpts=0.04*PTS -r 30"
+
+version: 0.17

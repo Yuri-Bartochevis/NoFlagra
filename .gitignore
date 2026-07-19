@@ -1,0 +1,28 @@
+# Secrets — never commit these
+.env
+frigate/config.real.yml
+
+# Recorded footage, exported clips, generated previews
+storage/*
+!storage/.gitkeep
+thumbs/*
+!thumbs/.gitkeep
+
+# Frigate writes these into the config directory at runtime
+frigate/frigate.db
+frigate/frigate.db-*
+frigate/.jwt_secret
+frigate/model_cache/
+frigate/*.log
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Editors / OS
+.DS_Store
+.vscode/
+.idea/

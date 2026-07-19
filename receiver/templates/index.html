@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#141D26">
+<title>GYM REC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* tatami slate — the mats, not a generic dark theme */
+    --mat:        #141D26;
+    --mat-raised: #1C2836;
+    --mat-edge:   #2A3A4C;
+    --chalk:      #E9EFF5;
+    --tape:       #8296AB;
+    --signal:     #E4402E;   /* record red — used only for recording state */
+    --signal-dim: #7A2419;
+    --gi:         #F2EDE4;   /* gi cotton, for the button face */
+    --ok:         #4BC08A;
+
+    --display: "Barlow Condensed", "Oswald", "Arial Narrow", system-ui, sans-serif;
+    --body: "Inter", system-ui, -apple-system, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--mat);
+    /* faint tatami weave */
+    background-image:
+      repeating-linear-gradient(90deg, rgba(255,255,255,.014) 0 2px, transparent 2px 4px),
+      repeating-linear-gradient(0deg, rgba(255,255,255,.014) 0 2px, transparent 2px 4px);
+    color: var(--chalk);
+    font-family: var(--body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 20px 20px 64px; }
+
+  /* ---------- header ---------- */
+  header {
+    display: flex; align-items: center; gap: 14px;
+    padding-bottom: 18px; margin-bottom: 24px;
+    border-bottom: 1px solid var(--mat-edge);
+  }
+  .mark { width: 38px; height: 38px; flex: none; }
+  .wordmark {
+    font-family: var(--display); font-weight: 700; font-size: 30px;
+    letter-spacing: .16em; text-transform: uppercase; line-height: 1;
+  }
+  .wordmark span { color: var(--signal); }
+  .tagline {
+    font-size: 11px; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--tape); margin-top: 4px;
+  }
+  .status {
+    margin-left: auto; display: flex; align-items: center; gap: 8px;
+    font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--tape);
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--tape); }
+  .dot.live { background: var(--signal); animation: pulse 2s ease-in-out infinite; }
+  .dot.down { background: var(--signal-dim); }
+  @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .3 } }
+
+  /* ---------- main deck ---------- */
+  .deck { display: grid; grid-template-columns: 1fr 320px; gap: 24px; align-items: start; }
+  @media (max-width: 800px) { .deck { grid-template-columns: 1fr; } }
+
+  .viewport {
+    position: relative; aspect-ratio: 16/9;
+    background: #0C1319; border: 1px solid var(--mat-edge); border-radius: 10px;
+    overflow: hidden;
+  }
+  .viewport img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .viewport .offline {
+    position: absolute; inset: 0; display: grid; place-content: center; gap: 6px;
+    text-align: center; color: var(--tape); font-size: 13px;
+  }
+  .rec-badge {
+    position: absolute; top: 12px; left: 12px;
+    display: flex; align-items: center; gap: 7px;
+    background: rgba(10,16,22,.72); backdrop-filter: blur(6px);
+    padding: 5px 10px; border-radius: 4px;
+    font-family: var(--mono); font-size: 11px; letter-spacing: .12em;
+  }
+  .rec-badge .dot { background: var(--signal); animation: pulse 2s ease-in-out infinite; }
+
+  /* ---------- the button: a portrait of the physical one ---------- */
+  .console { text-align: center; }
+  .press {
+    position: relative; width: 232px; height: 232px; margin: 0 auto;
+    border: none; padding: 0; cursor: pointer; border-radius: 50%;
+    background: radial-gradient(circle at 50% 34%, #F5453040 0%, transparent 62%), var(--mat-raised);
+    box-shadow: inset 0 0 0 1px var(--mat-edge);
+    display: grid; place-items: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .press .cap {
+    width: 168px; height: 168px; border-radius: 50%;
+    background: radial-gradient(circle at 42% 32%, #F2604E, var(--signal) 52%, #A8291B);
+    box-shadow: 0 12px 0 -2px #8E2417, 0 16px 28px rgba(0,0,0,.5), inset 0 3px 10px rgba(255,255,255,.28);
+    display: grid; place-items: center;
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .press:active .cap, .press.is-hit .cap {
+    transform: translateY(9px);
+    box-shadow: 0 3px 0 -2px #8E2417, 0 6px 12px rgba(0,0,0,.45), inset 0 3px 10px rgba(255,255,255,.18);
+  }
+  .press .cap b {
+    font-family: var(--display); font-weight: 700; font-size: 27px;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--gi);
+    text-shadow: 0 1px 2px rgba(0,0,0,.35);
+  }
+  .press:focus-visible { outline: 3px solid var(--gi); outline-offset: 6px; }
+  .press[disabled] { cursor: not-allowed; }
+  .press[disabled] .cap { filter: saturate(.25) brightness(.65); }
+
+  .console p {
+    margin: 18px 0 0; color: var(--tape); font-size: 13px; line-height: 1.5;
+  }
+  .console .countdown { font-family: var(--mono); color: var(--chalk); }
+
+  /* ---------- clips ---------- */
+  .clips { margin-top: 40px; }
+  .clips h2 {
+    font-family: var(--display); font-weight: 600; font-size: 15px;
+    letter-spacing: .2em; text-transform: uppercase; color: var(--tape);
+    margin: 0 0 18px; display: flex; align-items: baseline; gap: 10px;
+  }
+  .clips h2 em { font-style: normal; font-family: var(--mono); font-size: 12px; color: #4C5F73; }
+
+  .daygroup { margin-bottom: 30px; }
+  .dayhead {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 12px;
+  }
+  .dayhead b {
+    font-family: var(--display); font-weight: 600; font-size: 19px;
+    letter-spacing: .06em; color: var(--chalk);
+  }
+  .dayhead .rule { flex: 1; height: 1px; background: var(--mat-edge); }
+  .dayhead .tally { font-family: var(--mono); font-size: 12px; color: var(--tape); }
+
+  .grid {
+    display: grid; gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  }
+  .card {
+    background: var(--mat-raised); border: 1px solid var(--mat-edge);
+    border-radius: 10px; overflow: hidden;
+    transition: border-color .2s ease, transform .2s ease;
+  }
+  .card:hover { border-color: #3C5064; transform: translateY(-2px); }
+  .card.fresh { border-color: var(--ok); animation: land .5s ease; }
+  @keyframes land { from { opacity: 0; transform: translateY(-6px) } }
+
+  .card .shot {
+    position: relative; display: block; aspect-ratio: 16/9;
+    background: #0C1319; overflow: hidden;
+  }
+  .card .shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card .shot .pending {
+    position: absolute; inset: 0; display: grid; place-content: center;
+    color: #3C5064; font-family: var(--mono); font-size: 11px; letter-spacing: .1em;
+  }
+  .card .shot .stamp {
+    position: absolute; right: 8px; bottom: 8px;
+    background: rgba(10,16,22,.8); padding: 3px 7px; border-radius: 4px;
+    font-family: var(--mono); font-size: 12px;
+  }
+  .card .shot::after {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(228,64,46,.9) 0 22px, transparent 22px);
+    opacity: 0; transition: opacity .2s ease;
+  }
+  .card:hover .shot::after { opacity: .18; }
+
+  .card .foot {
+    display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+    border-top: 1px solid var(--mat-edge);
+  }
+  .card .foot .meta { font-size: 12px; color: var(--tape); flex: 1; }
+  .card .foot a {
+    font-family: var(--display); font-size: 12px; letter-spacing: .1em;
+    text-transform: uppercase; text-decoration: none; color: var(--tape);
+    padding: 4px 9px; border-radius: 4px; border: 1px solid transparent;
+  }
+  .card .foot a:hover { color: var(--signal); border-color: var(--mat-edge); }
+
+  .more {
+    display: block; width: 100%; margin-top: 8px; padding: 14px;
+    background: none; border: 1px dashed var(--mat-edge); border-radius: 8px;
+    color: var(--tape); cursor: pointer;
+    font-family: var(--display); font-size: 14px; letter-spacing: .14em; text-transform: uppercase;
+  }
+  .more:hover { border-color: var(--signal); color: var(--chalk); }
+  .more[disabled] { opacity: .5; cursor: default; }
+
+  .empty {
+    padding: 40px 20px; text-align: center; color: var(--tape); font-size: 14px;
+    border: 1px dashed var(--mat-edge); border-radius: 8px;
+  }
+
+  /* ---------- toast + key panel ---------- */
+  #toast {
+    position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 90px);
+    background: var(--mat-raised); border: 1px solid var(--mat-edge);
+    border-left: 3px solid var(--ok);
+    padding: 13px 20px; border-radius: 8px; font-size: 14px;
+    box-shadow: 0 12px 32px rgba(0,0,0,.5);
+    transition: transform .28s cubic-bezier(.2,.8,.3,1); z-index: 40;
+  }
+  #toast.up { transform: translate(-50%, 0); }
+  #toast.bad { border-left-color: var(--signal); }
+
+  .keybar {
+    margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--mat-edge);
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    font-size: 13px; color: var(--tape);
+  }
+  .keybar input {
+    background: var(--mat-raised); border: 1px solid var(--mat-edge); color: var(--chalk);
+    padding: 9px 12px; border-radius: 6px; font-family: var(--mono); font-size: 13px; min-width: 240px;
+  }
+  .keybar input:focus { outline: 2px solid var(--signal); outline-offset: 1px; }
+  .keybar button {
+    background: none; border: 1px solid var(--mat-edge); color: var(--chalk);
+    padding: 9px 16px; border-radius: 6px; cursor: pointer;
+    font-family: var(--display); letter-spacing: .1em; text-transform: uppercase; font-size: 13px;
+  }
+  .keybar button:hover { border-color: var(--signal); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <svg class="mark" viewBox="0 0 40 40" aria-hidden="true">
+      <rect x="1.5" y="1.5" width="37" height="37" rx="9" fill="#1C2836" stroke="#2A3A4C"/>
+      <circle cx="20" cy="20" r="8.5" fill="#E4402E"/>
+      <circle cx="20" cy="20" r="3" fill="#F2EDE4"/>
+      <rect x="8" y="30.5" width="24" height="2" rx="1" fill="#2A3A4C"/>
+    </svg>
+    <div>
+      <div class="wordmark">Gym <span>Rec</span></div>
+      <div class="tagline">{{ camera }} &middot; last {{ minutes }} min on tap</div>
+    </div>
+    <div class="status"><span class="dot" id="statusDot"></span><span id="statusText">checking</span></div>
+  </header>
+
+  <div class="deck">
+    <div class="viewport">
+      <img id="live" alt="Live view of the mat">
+      <div class="offline" id="liveOffline" hidden>
+        <div>No picture from {{ camera }}</div>
+        <div style="font-size:12px">Check the camera is on the same network</div>
+      </div>
+      <div class="rec-badge" id="recBadge"><span class="dot"></span> REC</div>
+    </div>
+
+    <div class="console">
+      <button class="press" id="press" aria-label="Save the last {{ minutes }} minutes">
+        <span class="cap"><b>Save</b></span>
+      </button>
+      <p id="pressHint">Saves the last {{ minutes }} minutes of the mat.<br>The roll is already recorded &mdash; press after it happens.</p>
+    </div>
+  </div>
+
+  <section class="clips">
+    <h2>Saved clips <em id="clipCount"></em></h2>
+    <div id="clipList"><div class="empty">Loading&hellip;</div></div>
+    <button class="more" id="more" hidden>Load older clips</button>
+  </section>
+
+  <div class="keybar">
+    <label for="secret">Button key</label>
+    <input id="secret" type="password" placeholder="the value from .env" autocomplete="off">
+    <button id="saveSecret">Remember</button>
+    <span id="secretState"></span>
+  </div>
+
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const LOOKBACK = {{ lookback }};
+const COOLDOWN = {{ cooldown }};
+const $ = s => document.querySelector(s);
+
+/* ---- key handling: kept on this device only ---- */
+let secret = localStorage.getItem('gymrec_key') || '';
+$('#secret').value = secret;
+$('#secretState').textContent = secret ? 'saved on this device' : 'needed before saving';
+$('#saveSecret').onclick = () => {
+  secret = $('#secret').value.trim();
+  localStorage.setItem('gymrec_key', secret);
+  $('#secretState').textContent = 'saved on this device';
+  toast('Key saved on this device');
+};
+
+function toast(msg, bad) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.toggle('bad', !!bad);
+  t.classList.add('up');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('up'), 4200);
+}
+
+/* ---- live thumbnail ---- */
+function refreshLive() {
+  const img = $('#live');
+  const probe = new Image();
+  probe.onload = () => {
+    img.src = probe.src; img.hidden = false;
+    $('#liveOffline').hidden = true; $('#recBadge').hidden = false;
+  };
+  probe.onerror = () => {
+    img.hidden = true;
+    $('#liveOffline').hidden = false; $('#recBadge').hidden = true;
+  };
+  probe.src = '/live.jpg?t=' + Date.now();
+}
+refreshLive();
+setInterval(refreshLive, 2000);
+
+/* ---- health ---- */
+async function health() {
+  try {
+    const r = await fetch('/health');
+    const j = await r.json();
+    $('#statusDot').className = 'dot ' + (j.frigate_reachable ? 'live' : 'down');
+    $('#statusText').textContent = j.frigate_reachable ? 'recording' : 'recorder offline';
+  } catch {
+    $('#statusDot').className = 'dot down';
+    $('#statusText').textContent = 'receiver offline';
+  }
+}
+health(); setInterval(health, 15000);
+
+/* ---- the press ---- */
+const btn = $('#press');
+btn.onclick = async () => {
+  if (!secret) { toast('Enter the button key first', true); $('#secret').focus(); return; }
+  btn.classList.add('is-hit');
+  setTimeout(() => btn.classList.remove('is-hit'), 160);
+
+  try {
+    const r = await fetch('/save-clip', { method: 'POST', headers: { 'X-Auth-Token': secret } });
+    const j = await r.json();
+    if (r.status === 202) {
+      toast('Saving the last ' + Math.round(LOOKBACK / 60) + ' minutes');
+      lockout(COOLDOWN);
+      setTimeout(loadClips, 18000);
+    } else if (r.status === 429) {
+      toast('Just saved one — wait ' + Math.ceil(j.retry_after) + 's', true);
+      lockout(Math.ceil(j.retry_after));
+    } else if (r.status === 401) {
+      toast('That key does not match the one in .env', true);
+    } else {
+      toast('Recorder refused the request', true);
+    }
+  } catch {
+    toast('Cannot reach the receiver', true);
+  }
+};
+
+function lockout(secs) {
+  btn.disabled = true;
+  const hint = $('#pressHint');
+  const original = hint.innerHTML;
+  let left = secs;
+  const tick = () => {
+    hint.innerHTML = 'Ready again in <span class="countdown">' + left + 's</span>';
+    if (left-- <= 0) { clearInterval(iv); btn.disabled = false; hint.innerHTML = original; }
+  };
+  tick();
+  const iv = setInterval(tick, 1000);
+}
+
+/* ---- clip list: paginated, grouped by day ---- */
+const PAGE = {{ page_size }};
+let loaded = [];          // every clip fetched so far, newest first
+let offset = 0;
+let hasMore = false;
+let known = new Set();
+
+async function fetchClips(reset) {
+  if (reset) { loaded = []; offset = 0; known = known; }
+  try {
+    const r = await fetch('/api/clips?limit=' + PAGE + '&offset=' + offset);
+    const data = await r.json();
+
+    const seen = new Set(loaded.map(c => c.file));
+    data.clips.forEach(c => { if (!seen.has(c.file)) loaded.push(c); });
+    offset = loaded.length;
+    hasMore = data.has_more;
+
+    $('#clipCount').textContent = data.total
+      ? data.total + (data.total_gb >= 0.1 ? ' \u00b7 ' + data.total_gb + ' GB' : '')
+      : '';
+    render();
+  } catch {
+    $('#clipList').innerHTML = '<div class="empty">Cannot read the clips folder.</div>';
+  }
+}
+
+function render() {
+  const list = $('#clipList');
+  const more = $('#more');
+
+  if (!loaded.length) {
+    list.innerHTML = '<div class="empty">No clips yet. Press save after a good roll.</div>';
+    more.hidden = true;
+    return;
+  }
+
+  /* group consecutive clips under their day heading */
+  const groups = [];
+  loaded.forEach(c => {
+    const last = groups[groups.length - 1];
+    if (last && last.day === c.day) last.clips.push(c);
+    else groups.push({ day: c.day, clips: [c] });
+  });
+
+  list.innerHTML = groups.map(g => {
+    const cards = g.clips.map(c => {
+      const fresh = known.size && !known.has(c.file) ? ' fresh' : '';
+      const url = '/clips/' + encodeURIComponent(c.file);
+      return '<div class="card' + fresh + '">' +
+        '<a class="shot" href="' + url + '" target="_blank" title="Watch this clip">' +
+          '<span class="pending">preview</span>' +
+          '<img loading="lazy" src="' + c.thumb + '" alt="" ' +
+               'onload="this.previousElementSibling.style.display=\'none\'" ' +
+               'onerror="this.remove()">' +
+          '<span class="stamp">' + c.time + '</span>' +
+        '</a>' +
+        '<div class="foot">' +
+          '<span class="meta">' + c.ago + ' \u00b7 ' + c.size_mb + ' MB</span>' +
+          '<a href="' + url + '" target="_blank">Watch</a>' +
+          '<a href="' + url + '?dl=1">Save</a>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    return '<div class="daygroup">' +
+      '<div class="dayhead"><b>' + g.day + '</b><span class="rule"></span>' +
+      '<span class="tally">' + g.clips.length + '</span></div>' +
+      '<div class="grid">' + cards + '</div></div>';
+  }).join('');
+
+  more.hidden = !hasMore;
+  more.disabled = false;
+  more.textContent = 'Load older clips';
+  known = new Set(loaded.map(c => c.file));
+}
+
+$('#more').onclick = () => {
+  $('#more').disabled = true;
+  $('#more').textContent = 'Loading\u2026';
+  fetchClips(false);
+};
+
+/* after a save, pull just the newest page so the fresh clip appears on top */
+function loadClips() {
+  const keep = offset;
+  offset = 0;
+  fetchClips(false).then(() => { offset = Math.max(keep, offset); });
+}
+
+fetchClips(true);
+setInterval(loadClips, 30000);
+</script>
+</body>
+</html>

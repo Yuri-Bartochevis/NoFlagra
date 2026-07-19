@@ -1,0 +1,60 @@
+services:
+  frigate:
+    container_name: frigate
+    image: ghcr.io/blakeblackshear/frigate:0.17.2   # pinned: 0.15 changed the record schema
+    restart: unless-stopped
+    shm_size: "128mb"
+    volumes:
+      # Mount the whole directory, not just config.yml - Frigate writes
+      # frigate.db and .jwt_secret in here and they must survive a restart.
+      - ./frigate:/config
+      - ./storage:/media/frigate
+      - /etc/localtime:/etc/localtime:ro
+    tmpfs:
+      # Recording segments land here before being written to disk. On disk it
+      # wears out a Pi's SD card fast.
+      - /tmp/cache:size=1000000000
+    ports:
+      - "5000:5000"   # unauthenticated internal API - do NOT expose to the internet
+      - "8971:8971"   # authenticated UI
+      - "8554:8554"   # RTSP restream (optional)
+
+  receiver:
+    container_name: gir-receiver
+    build: ./receiver
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    volumes:
+      # read-only: the dashboard lists and serves finished clips
+      - ./storage:/media/frigate:ro
+      # writable: cached preview images, regenerated if deleted
+      - ./thumbs:/thumbs
+    environment:
+      RECEIVER_SECRET: "${RECEIVER_SECRET:?set RECEIVER_SECRET in .env}"
+      FRIGATE_URL: "http://frigate:5000"
+      CAMERA_NAME: "mat_camera"
+      LOOKBACK_SECONDS: "600"
+      POST_ROLL_SECONDS: "15"
+      COOLDOWN_SECONDS: "30"   # duplicate presses blocked for this long
+      EXPORTS_DIR: "/media/frigate/exports"
+      THUMBS_DIR: "/thumbs"
+      PAGE_SIZE: "12"          # clips loaded per page
+    depends_on:
+      - frigate
+
+  # ---- test rig only: a fake RTSP camera, so you can test the whole chain
+  # ---- before the real hardware arrives.
+  # ---- Start with:  docker compose --profile sim up
+  fakecam:
+    container_name: gir-fakecam
+    image: bluenviron/mediamtx:latest-ffmpeg
+    profiles: ["sim"]
+    restart: unless-stopped
+    environment:
+      MTX_PROTOCOLS: tcp
+      MTX_PATHS_MAT_RUNONINIT: >
+        ffmpeg -re -f lavfi -i testsrc=size=1280x720:rate=15
+        -c:v libx264 -preset ultrafast -tune zerolatency -g 30 -pix_fmt yuv420p
+        -f rtsp rtsp://localhost:8554/mat
+      MTX_PATHS_MAT_RUNONINITRESTART: "yes"
