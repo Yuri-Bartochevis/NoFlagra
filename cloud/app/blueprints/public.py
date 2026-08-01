@@ -1,4 +1,4 @@
-from flask import Blueprint
+from flask import Blueprint, render_template
 from sqlalchemy import text
 
 from ..extensions import db
@@ -8,8 +8,7 @@ public_bp = Blueprint("public", __name__)
 
 @public_bp.route("/")
 def index():
-    # Phase 5 replaces this with the real marketing site.
-    return "NO FLAGRA — cloud app scaffold. Marketing site lands in Phase 5."
+    return render_template("index.html")
 
 
 @public_bp.route("/health")

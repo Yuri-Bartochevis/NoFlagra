@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block title %}NO FLAGRA — never miss the moment{% endblock %}
+
+{% block extra_head %}
+<style>
+  .hero {
+    padding: 90px 24px 70px; text-align: center; max-width: 780px; margin: 0 auto;
+  }
+  .hero h1 {
+    font-family: var(--display); font-weight: 400; text-transform: uppercase;
+    color: var(--yellow); font-size: clamp(40px, 7vw, 76px); line-height: 1.02;
+    letter-spacing: .01em; margin: 0 0 22px; text-wrap: balance;
+  }
+  .hero p {
+    font-size: 19px; color: var(--paper); line-height: 1.5; margin: 0 auto 34px; max-width: 560px;
+  }
+  .hero .btn { font-size: 18px; padding: 15px 34px; }
+
+  section.band { border-top: 1px solid var(--edge); padding: 56px 24px; }
+  section.band .inner { max-width: 1080px; margin: 0 auto; }
+  .eyebrow {
+    font-family: var(--display); font-weight: 400; font-size: 14px;
+    letter-spacing: .2em; text-transform: uppercase; color: var(--dim); margin: 0 0 30px;
+  }
+
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+  @media (max-width: 760px) { .steps { grid-template-columns: 1fr 1fr; } }
+  .step .num {
+    font-family: var(--display); font-weight: 400; font-size: 40px; color: var(--yellow);
+    line-height: 1; margin-bottom: 10px;
+  }
+  .step h3 {
+    font-family: var(--display); font-weight: 400; text-transform: uppercase;
+    font-size: 18px; letter-spacing: .03em; margin: 0 0 8px;
+  }
+  .step p { color: var(--dim); font-size: 14px; margin: 0; line-height: 1.5; }
+
+  .benefits { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  @media (max-width: 760px) { .benefits { grid-template-columns: 1fr 1fr; } }
+  .benefit {
+    background: var(--panel); border: 1px solid var(--edge); border-radius: 10px;
+    padding: 22px;
+  }
+  .benefit h3 {
+    font-family: var(--display); font-weight: 400; text-transform: uppercase;
+    font-size: 16px; letter-spacing: .02em; margin: 0 0 8px; color: var(--paper);
+  }
+  .benefit p { color: var(--dim); font-size: 14px; margin: 0; line-height: 1.5; }
+
+  .showcase { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
+  @media (max-width: 760px) { .showcase { grid-template-columns: 1fr; } }
+  .showcase h2 {
+    font-family: var(--display); font-weight: 400; text-transform: uppercase;
+    font-size: 28px; letter-spacing: .02em; margin: 0 0 14px;
+  }
+  .showcase p { color: var(--dim); font-size: 15px; line-height: 1.6; }
+  .mock {
+    background: var(--panel-deep); border: 1px solid var(--edge); border-radius: 12px;
+    padding: 18px; box-shadow: 0 20px 50px rgba(0,0,0,.5);
+  }
+  .mock .mock-viewport {
+    aspect-ratio: 16/9; background: #0C0C0C; border: 1px solid var(--edge);
+    border-radius: 8px; display: grid; place-items: center; color: var(--dim); font-size: 13px;
+  }
+  .mock .mock-row { display: flex; gap: 10px; margin-top: 14px; }
+  .mock .mock-card {
+    flex: 1; aspect-ratio: 16/9; background: var(--panel); border: 1px solid var(--edge);
+    border-radius: 6px;
+  }
+  .mock .mock-btn {
+    width: 56px; height: 56px; border-radius: 50%; margin: 14px auto 0;
+    background: radial-gradient(circle at 42% 32%, var(--yellow-hi), var(--yellow) 55%, var(--yellow-lo));
+  }
+
+  .cta-band { text-align: center; padding: 70px 24px; }
+  .cta-band h2 {
+    font-family: var(--display); font-weight: 400; text-transform: uppercase;
+    font-size: clamp(26px, 4vw, 38px); margin: 0 0 26px; text-wrap: balance;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="hero">
+  <h1>Never miss the moment.</h1>
+  <p>Press a button mat-side. Get the last 10 minutes, cut from continuous
+     recording and ready to watch — before you even walk off the mat.</p>
+  <a class="btn btn-primary" href="{{ url_for('auth.signup') }}">Start your gym</a>
+</div>
+
+<section class="band">
+  <div class="inner">
+    <div class="eyebrow">How it works</div>
+    <div class="steps">
+      <div class="step">
+        <div class="num">1</div>
+        <h3>Press</h3>
+        <p>One button by the mat. No camera operator, no phone to dig out mid-roll.</p>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <h3>Cut</h3>
+        <p>The camera's already been rolling — the button just cuts the last 10 minutes from it.</p>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <h3>Review</h3>
+        <p>The clip shows up in your gym's library, ready to watch from your phone in seconds.</p>
+      </div>
+      <div class="step">
+        <div class="num">4</div>
+        <h3>Share</h3>
+        <p>Send it to your training partner, your coach, or save it for the next belt review.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="inner">
+    <div class="eyebrow">Why gyms use it</div>
+    <div class="benefits">
+      <div class="benefit">
+        <h3>Never miss a submission</h3>
+        <p>The camera never stops rolling, so the moment is already saved by the time anyone thinks to hit record.</p>
+      </div>
+      <div class="benefit">
+        <h3>One button, no operator</h3>
+        <p>Anyone on the mat can save a clip mid-roll. Nobody's job is "hold the phone."</p>
+      </div>
+      <div class="benefit">
+        <h3>One login for everyone</h3>
+        <p>Every member of your gym gets access to the same clip library — no shared phone, no group chat dump.</p>
+      </div>
+      <div class="benefit">
+        <h3>A running history</h3>
+        <p>Every saved clip lives in the cloud, searchable by day, ready whenever you want to look back.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="inner showcase">
+    <div>
+      <h2>See it in action</h2>
+      <p>This is the actual dashboard your gym gets: a live view of the mat,
+         one big button, and every saved clip grouped by day — black and
+         yellow, built to be readable from across the room.</p>
+    </div>
+    <div class="mock" aria-hidden="true">
+      <div class="mock-viewport">live view</div>
+      <div class="mock-btn"></div>
+      <div class="mock-row">
+        <div class="mock-card"></div>
+        <div class="mock-card"></div>
+        <div class="mock-card"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band cta-band">
+  <h2>Ready to put one on your mat?</h2>
+  <a class="btn btn-primary" href="{{ url_for('auth.signup') }}">Start your gym</a>
+  <p style="color:var(--dim);font-size:14px;margin-top:18px;">
+    Setting up more than one location, or want to talk pricing first?
+    <a href="mailto:hello@noflagra.app" style="color:var(--yellow);">Get in touch</a>.
+  </p>
+</section>
+
+{% endblock %}

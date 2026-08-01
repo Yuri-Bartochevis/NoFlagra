@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A0A0A">
+<title>{% block title %}NO FLAGRA{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:        #0A0A0A;
+    --panel:      #161616;
+    --panel-deep: #0D0D0D;
+    --edge:       #2A2A2A;
+    --edge-hi:    #3D3D3D;
+    --paper:      #F5F5F0;
+    --dim:        #8F8F8A;
+    --yellow:     #FFD400;
+    --yellow-hi:  #FFE666;
+    --yellow-lo:  #C79A00;
+    --ink-on-y:   #141210;
+    --rec:        #FF3B30;
+    --ok:         #3ECF8E;
+
+    --display: "Anton", "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+    --body: "Inter", system-ui, -apple-system, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0; min-height: 100vh; background: var(--ink); color: var(--paper);
+    font-family: var(--body); -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: inherit; }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 20px 24px 64px; }
+
+  header.site {
+    display: flex; align-items: center; gap: 14px;
+    padding: 20px 24px; border-bottom: 1px solid var(--edge);
+    max-width: 1080px; margin: 0 auto;
+  }
+  .mark { width: 30px; height: 30px; flex: none; }
+  .wordmark {
+    font-family: var(--display); font-weight: 400; font-size: 24px;
+    letter-spacing: .04em; text-transform: uppercase; line-height: 1;
+    text-decoration: none; color: var(--paper);
+  }
+  .wordmark span { color: var(--yellow); }
+  header.site nav { margin-left: auto; display: flex; align-items: center; gap: 18px; }
+  header.site nav a { text-decoration: none; font-size: 14px; color: var(--dim); }
+  header.site nav a:hover { color: var(--paper); }
+
+  .btn {
+    display: inline-block; font-family: var(--display); font-weight: 400;
+    font-size: 16px; letter-spacing: .04em; text-transform: uppercase;
+    text-decoration: none; padding: 12px 26px; border-radius: 8px;
+    border: 1px solid transparent; cursor: pointer;
+  }
+  .btn-primary { background: var(--yellow); color: var(--ink-on-y); }
+  .btn-primary:hover { background: var(--yellow-hi); }
+  .btn-ghost { border-color: var(--edge); color: var(--paper); background: none; }
+  .btn-ghost:hover { border-color: var(--yellow); }
+
+  .flash { max-width: 1080px; margin: 20px auto 0; padding: 0 24px; }
+  .flash .msg {
+    background: var(--panel); border: 1px solid var(--edge); border-left: 3px solid var(--rec);
+    padding: 12px 16px; border-radius: 6px; font-size: 14px; margin-bottom: 10px;
+  }
+
+  form.card {
+    max-width: 420px; margin: 60px auto; background: var(--panel);
+    border: 1px solid var(--edge); border-radius: 12px; padding: 32px;
+  }
+  form.card h1 {
+    font-family: var(--display); font-weight: 400; font-size: 28px;
+    text-transform: uppercase; letter-spacing: .03em; margin: 0 0 24px;
+  }
+  form.card label {
+    display: block; font-size: 13px; letter-spacing: .04em; text-transform: uppercase;
+    color: var(--dim); margin: 16px 0 6px;
+  }
+  form.card input {
+    width: 100%; background: var(--panel-deep); border: 1px solid var(--edge);
+    color: var(--paper); padding: 11px 12px; border-radius: 6px; font-size: 15px;
+  }
+  form.card input:focus { outline: 2px solid var(--yellow); outline-offset: 1px; }
+  form.card .btn { width: 100%; text-align: center; margin-top: 26px; }
+  form.card .hint { margin-top: 16px; font-size: 13px; color: var(--dim); text-align: center; }
+  form.card .hint a { color: var(--yellow); text-decoration: none; }
+
+  footer.site {
+    max-width: 1080px; margin: 0 auto; padding: 32px 24px;
+    border-top: 1px solid var(--edge); color: var(--dim); font-size: 13px;
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  }
+
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<header class="site">
+  <a href="{{ url_for('public.index') }}" style="display:flex;align-items:center;gap:10px;text-decoration:none;">
+    <svg class="mark" viewBox="0 0 40 40" aria-hidden="true">
+      <rect x="1.5" y="1.5" width="37" height="37" rx="9" fill="#161616" stroke="#2A2A2A"/>
+      <path d="M21.5 7 L11 22.5 H18.5 L17 33 L29 16.5 H21 Z" fill="#FFD400"/>
+    </svg>
+    <span class="wordmark">No <span>Flagra</span></span>
+  </a>
+  <nav>
+    {% if current_user.is_authenticated %}
+      <a href="{{ url_for('dashboard.home') }}">Dashboard</a>
+      <form action="{{ url_for('auth.logout') }}" method="post" style="display:inline;">
+        <button class="btn btn-ghost" type="submit" style="padding:8px 16px;font-size:13px;">Log out</button>
+      </form>
+    {% else %}
+      <a href="{{ url_for('auth.login') }}">Log in</a>
+      <a class="btn btn-primary" style="padding:8px 18px;font-size:13px;" href="{{ url_for('auth.signup') }}">Start your gym</a>
+    {% endif %}
+  </nav>
+</header>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="flash">
+    {% for category, message in messages %}
+      <div class="msg">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endwith %}
+
+{% block content %}{% endblock %}
+
+<footer class="site">
+  <span>&copy; NO FLAGRA</span>
+  <span><a href="mailto:hello@noflagra.app">contact</a> &middot; <a href="https://github.com/Yuri-Bartochevis/NoFlagra">github</a></span>
+</footer>
+
+</body>
+</html>

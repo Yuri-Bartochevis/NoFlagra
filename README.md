@@ -154,22 +154,24 @@ relay that isn't needed to sell the clip library.
 ### Route map (post-login app lives at `/app/*`)
 
 ```
-/                 public marketing site (no login)      — Phase 5
+/                 public marketing site (no login)      — done
 /features, /about  more marketing pages                  — Phase 5
 /signup             "Start your gym" — creates User +
-                     Establishment + Membership(admin)    — Phase 1
-/login               session login                        — Phase 1
-/invite/<token>       accept an invite, set a password     — Phase 1
+                     Establishment + Membership(admin)    — done
+/login, /logout      session login                        — done
+/invite/<token>       accept an invite, set a password     — Phase 1 (remaining)
 
-/app/                the existing black/yellow dashboard,   — Phase 4
-                      now scoped to g.establishment:
+/app/                gated + establishment-scoped,          — done (placeholder),
+                      placeholder today; Phase 4 replaces      Phase 4 for real content
+                      it with the real black/yellow
+                      dashboard:
                         - live view (LAN-only banner if
                           viewed off the gym's network)
                         - clip library, from Postgres +
                           presigned S3 URLs
 /app/devices           admin: generate a pairing code,       — Phase 2
                         see each Pi's status
-/app/team               admin: invite/manage members          — Phase 1
+/app/team               admin: invite/manage members          — Phase 1 (remaining)
 ```
 
 ### Build order
@@ -212,9 +214,10 @@ tiers, multi-camera-per-gym, a mobile app, per-gym subdomains.
 - [ ] Real button, end to end
 - [ ] Deep sleep for battery life
 - [ ] Moved to the Raspberry Pi
-- [ ] Cloud app: accounts, tenancy, invites (Phase 1)
+- [x] Public marketing site live at `/` — hero, how-it-works, benefits, showcase, CTA (Phase 5, pulled forward)
+- [x] Signup/login/logout, `Establishment` + admin `Membership`, `/app` gated and tenant-scoped (Phase 1, partial — invites still open)
+- [ ] Admin invite flow — add a second person to a gym (Phase 1 remaining)
 - [ ] Device pairing + clip metadata in Postgres (Phase 2)
 - [ ] S3 upload pipeline (Phase 3)
-- [ ] Post-login dashboard live at `/app` (Phase 4)
-- [ ] Public marketing site (Phase 5)
+- [ ] Post-login dashboard replaced with the real black/yellow clip library (Phase 4)
 - [ ] Second gym onboarded (Phase 6)
