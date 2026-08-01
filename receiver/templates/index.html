@@ -3,25 +3,30 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#141D26">
-<title>GYM REC</title>
+<meta name="theme-color" content="#0A0A0A">
+<title>NO FLAGRA</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    /* tatami slate — the mats, not a generic dark theme */
-    --mat:        #141D26;
-    --mat-raised: #1C2836;
-    --mat-edge:   #2A3A4C;
-    --chalk:      #E9EFF5;
-    --tape:       #8296AB;
-    --signal:     #E4402E;   /* record red — used only for recording state */
-    --signal-dim: #7A2419;
-    --gi:         #F2EDE4;   /* gi cotton, for the button face */
-    --ok:         #4BC08A;
+    /* black base, yellow as the one brand color — everything else stays out of its way */
+    --ink:        #0A0A0A;
+    --panel:      #161616;
+    --panel-deep: #0D0D0D;
+    --edge:       #2A2A2A;
+    --edge-hi:    #3D3D3D;
+    --paper:      #F5F5F0;
+    --dim:        #8F8F8A;
+    --yellow:     #FFD400;   /* the brand — NO FLAGRA */
+    --yellow-hi:  #FFE666;
+    --yellow-lo:  #C79A00;
+    --ink-on-y:   #141210;   /* text sitting on a yellow fill */
+    --rec:        #FF3B30;   /* recording state only — never decorative */
+    --rec-dim:    #7A241F;
+    --ok:         #3ECF8E;
 
-    --display: "Barlow Condensed", "Oswald", "Arial Narrow", system-ui, sans-serif;
+    --display: "Anton", "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
     --body: "Inter", system-ui, -apple-system, sans-serif;
     --mono: ui-monospace, "SF Mono", Menlo, monospace;
   }
@@ -31,12 +36,12 @@
   body {
     margin: 0;
     min-height: 100vh;
-    background: var(--mat);
-    /* faint tatami weave */
+    background: var(--ink);
+    /* faint grid, court-line feel */
     background-image:
-      repeating-linear-gradient(90deg, rgba(255,255,255,.014) 0 2px, transparent 2px 4px),
-      repeating-linear-gradient(0deg, rgba(255,255,255,.014) 0 2px, transparent 2px 4px);
-    color: var(--chalk);
+      repeating-linear-gradient(90deg, rgba(255,255,255,.02) 0 1px, transparent 1px 48px),
+      repeating-linear-gradient(0deg, rgba(255,255,255,.02) 0 1px, transparent 1px 48px);
+    color: var(--paper);
     font-family: var(--body);
     -webkit-font-smoothing: antialiased;
   }
@@ -47,25 +52,26 @@
   header {
     display: flex; align-items: center; gap: 14px;
     padding-bottom: 18px; margin-bottom: 24px;
-    border-bottom: 1px solid var(--mat-edge);
+    border-bottom: 1px solid var(--edge);
   }
   .mark { width: 38px; height: 38px; flex: none; }
   .wordmark {
-    font-family: var(--display); font-weight: 700; font-size: 30px;
-    letter-spacing: .16em; text-transform: uppercase; line-height: 1;
+    font-family: var(--display); font-weight: 400; font-size: 32px;
+    letter-spacing: .04em; text-transform: uppercase; line-height: 1;
+    color: var(--paper);
   }
-  .wordmark span { color: var(--signal); }
+  .wordmark span { color: var(--yellow); }
   .tagline {
     font-size: 11px; letter-spacing: .18em; text-transform: uppercase;
-    color: var(--tape); margin-top: 4px;
+    color: var(--dim); margin-top: 5px;
   }
   .status {
     margin-left: auto; display: flex; align-items: center; gap: 8px;
-    font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--tape);
+    font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim);
   }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--tape); }
-  .dot.live { background: var(--signal); animation: pulse 2s ease-in-out infinite; }
-  .dot.down { background: var(--signal-dim); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dim); }
+  .dot.live { background: var(--rec); animation: pulse 2s ease-in-out infinite; }
+  .dot.down { background: var(--rec-dim); }
   @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .3 } }
 
   /* ---------- main deck ---------- */
@@ -74,166 +80,165 @@
 
   .viewport {
     position: relative; aspect-ratio: 16/9;
-    background: #0C1319; border: 1px solid var(--mat-edge); border-radius: 10px;
+    background: var(--panel-deep); border: 1px solid var(--edge); border-radius: 10px;
     overflow: hidden;
   }
   .viewport img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .viewport .offline {
     position: absolute; inset: 0; display: grid; place-content: center; gap: 6px;
-    text-align: center; color: var(--tape); font-size: 13px;
+    text-align: center; color: var(--dim); font-size: 13px;
   }
   .rec-badge {
     position: absolute; top: 12px; left: 12px;
     display: flex; align-items: center; gap: 7px;
-    background: rgba(10,16,22,.72); backdrop-filter: blur(6px);
+    background: rgba(10,10,10,.72); backdrop-filter: blur(6px);
     padding: 5px 10px; border-radius: 4px;
     font-family: var(--mono); font-size: 11px; letter-spacing: .12em;
   }
-  .rec-badge .dot { background: var(--signal); animation: pulse 2s ease-in-out infinite; }
+  .rec-badge .dot { background: var(--rec); animation: pulse 2s ease-in-out infinite; }
 
   /* ---------- the button: a portrait of the physical one ---------- */
   .console { text-align: center; }
   .press {
     position: relative; width: 232px; height: 232px; margin: 0 auto;
     border: none; padding: 0; cursor: pointer; border-radius: 50%;
-    background: radial-gradient(circle at 50% 34%, #F5453040 0%, transparent 62%), var(--mat-raised);
-    box-shadow: inset 0 0 0 1px var(--mat-edge);
+    background: radial-gradient(circle at 50% 34%, #FFD40033 0%, transparent 62%), var(--panel);
+    box-shadow: inset 0 0 0 1px var(--edge);
     display: grid; place-items: center;
     -webkit-tap-highlight-color: transparent;
   }
   .press .cap {
     width: 168px; height: 168px; border-radius: 50%;
-    background: radial-gradient(circle at 42% 32%, #F2604E, var(--signal) 52%, #A8291B);
-    box-shadow: 0 12px 0 -2px #8E2417, 0 16px 28px rgba(0,0,0,.5), inset 0 3px 10px rgba(255,255,255,.28);
+    background: radial-gradient(circle at 42% 32%, var(--yellow-hi), var(--yellow) 55%, var(--yellow-lo));
+    box-shadow: 0 12px 0 -2px #8A6C00, 0 16px 28px rgba(0,0,0,.6), inset 0 3px 10px rgba(255,255,255,.4);
     display: grid; place-items: center;
     transition: transform .12s ease, box-shadow .12s ease;
   }
   .press:active .cap, .press.is-hit .cap {
     transform: translateY(9px);
-    box-shadow: 0 3px 0 -2px #8E2417, 0 6px 12px rgba(0,0,0,.45), inset 0 3px 10px rgba(255,255,255,.18);
+    box-shadow: 0 3px 0 -2px #8A6C00, 0 6px 12px rgba(0,0,0,.5), inset 0 3px 10px rgba(255,255,255,.3);
   }
   .press .cap b {
-    font-family: var(--display); font-weight: 700; font-size: 27px;
-    letter-spacing: .1em; text-transform: uppercase; color: var(--gi);
-    text-shadow: 0 1px 2px rgba(0,0,0,.35);
+    font-family: var(--display); font-weight: 400; font-size: 28px;
+    letter-spacing: .06em; text-transform: uppercase; color: var(--ink-on-y);
   }
-  .press:focus-visible { outline: 3px solid var(--gi); outline-offset: 6px; }
+  .press:focus-visible { outline: 3px solid var(--yellow); outline-offset: 6px; }
   .press[disabled] { cursor: not-allowed; }
-  .press[disabled] .cap { filter: saturate(.25) brightness(.65); }
+  .press[disabled] .cap { filter: saturate(.25) brightness(.75); }
 
   .console p {
-    margin: 18px 0 0; color: var(--tape); font-size: 13px; line-height: 1.5;
+    margin: 18px 0 0; color: var(--dim); font-size: 13px; line-height: 1.5;
   }
-  .console .countdown { font-family: var(--mono); color: var(--chalk); }
+  .console .countdown { font-family: var(--mono); color: var(--paper); }
 
   /* ---------- clips ---------- */
   .clips { margin-top: 40px; }
   .clips h2 {
-    font-family: var(--display); font-weight: 600; font-size: 15px;
-    letter-spacing: .2em; text-transform: uppercase; color: var(--tape);
+    font-family: var(--display); font-weight: 400; font-size: 16px;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--dim);
     margin: 0 0 18px; display: flex; align-items: baseline; gap: 10px;
   }
-  .clips h2 em { font-style: normal; font-family: var(--mono); font-size: 12px; color: #4C5F73; }
+  .clips h2 em { font-style: normal; font-family: var(--mono); font-size: 12px; color: #5A5A55; }
 
   .daygroup { margin-bottom: 30px; }
   .dayhead {
     display: flex; align-items: center; gap: 14px; margin-bottom: 12px;
   }
   .dayhead b {
-    font-family: var(--display); font-weight: 600; font-size: 19px;
-    letter-spacing: .06em; color: var(--chalk);
+    font-family: var(--display); font-weight: 400; font-size: 20px;
+    letter-spacing: .03em; color: var(--paper);
   }
-  .dayhead .rule { flex: 1; height: 1px; background: var(--mat-edge); }
-  .dayhead .tally { font-family: var(--mono); font-size: 12px; color: var(--tape); }
+  .dayhead .rule { flex: 1; height: 1px; background: var(--edge); }
+  .dayhead .tally { font-family: var(--mono); font-size: 12px; color: var(--dim); }
 
   .grid {
     display: grid; gap: 14px;
     grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
   }
   .card {
-    background: var(--mat-raised); border: 1px solid var(--mat-edge);
+    background: var(--panel); border: 1px solid var(--edge);
     border-radius: 10px; overflow: hidden;
     transition: border-color .2s ease, transform .2s ease;
   }
-  .card:hover { border-color: #3C5064; transform: translateY(-2px); }
+  .card:hover { border-color: var(--edge-hi); transform: translateY(-2px); }
   .card.fresh { border-color: var(--ok); animation: land .5s ease; }
   @keyframes land { from { opacity: 0; transform: translateY(-6px) } }
 
   .card .shot {
     position: relative; display: block; aspect-ratio: 16/9;
-    background: #0C1319; overflow: hidden;
+    background: var(--panel-deep); overflow: hidden;
   }
   .card .shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .card .shot .pending {
     position: absolute; inset: 0; display: grid; place-content: center;
-    color: #3C5064; font-family: var(--mono); font-size: 11px; letter-spacing: .1em;
+    color: #4A4A45; font-family: var(--mono); font-size: 11px; letter-spacing: .1em;
   }
   .card .shot .stamp {
     position: absolute; right: 8px; bottom: 8px;
-    background: rgba(10,16,22,.8); padding: 3px 7px; border-radius: 4px;
+    background: rgba(10,10,10,.8); padding: 3px 7px; border-radius: 4px;
     font-family: var(--mono); font-size: 12px;
   }
   .card .shot::after {
     content: ""; position: absolute; inset: 0;
-    background: radial-gradient(circle at 50% 50%, rgba(228,64,46,.9) 0 22px, transparent 22px);
+    background: radial-gradient(circle at 50% 50%, rgba(255,212,0,.9) 0 22px, transparent 22px);
     opacity: 0; transition: opacity .2s ease;
   }
-  .card:hover .shot::after { opacity: .18; }
+  .card:hover .shot::after { opacity: .16; }
 
   .card .foot {
     display: flex; align-items: center; gap: 8px; padding: 10px 12px;
-    border-top: 1px solid var(--mat-edge);
+    border-top: 1px solid var(--edge);
   }
-  .card .foot .meta { font-size: 12px; color: var(--tape); flex: 1; }
+  .card .foot .meta { font-size: 12px; color: var(--dim); flex: 1; }
   .card .foot a {
-    font-family: var(--display); font-size: 12px; letter-spacing: .1em;
-    text-transform: uppercase; text-decoration: none; color: var(--tape);
+    font-family: var(--display); font-size: 12px; letter-spacing: .06em;
+    text-transform: uppercase; text-decoration: none; color: var(--dim);
     padding: 4px 9px; border-radius: 4px; border: 1px solid transparent;
   }
-  .card .foot a:hover { color: var(--signal); border-color: var(--mat-edge); }
+  .card .foot a:hover { color: var(--yellow); border-color: var(--edge); }
 
   .more {
     display: block; width: 100%; margin-top: 8px; padding: 14px;
-    background: none; border: 1px dashed var(--mat-edge); border-radius: 8px;
-    color: var(--tape); cursor: pointer;
-    font-family: var(--display); font-size: 14px; letter-spacing: .14em; text-transform: uppercase;
+    background: none; border: 1px dashed var(--edge); border-radius: 8px;
+    color: var(--dim); cursor: pointer;
+    font-family: var(--display); font-weight: 400; font-size: 15px; letter-spacing: .08em; text-transform: uppercase;
   }
-  .more:hover { border-color: var(--signal); color: var(--chalk); }
+  .more:hover { border-color: var(--yellow); color: var(--paper); }
   .more[disabled] { opacity: .5; cursor: default; }
 
   .empty {
-    padding: 40px 20px; text-align: center; color: var(--tape); font-size: 14px;
-    border: 1px dashed var(--mat-edge); border-radius: 8px;
+    padding: 40px 20px; text-align: center; color: var(--dim); font-size: 14px;
+    border: 1px dashed var(--edge); border-radius: 8px;
   }
 
   /* ---------- toast + key panel ---------- */
   #toast {
     position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 90px);
-    background: var(--mat-raised); border: 1px solid var(--mat-edge);
-    border-left: 3px solid var(--ok);
+    background: var(--panel); border: 1px solid var(--edge);
+    border-left: 3px solid var(--yellow);
     padding: 13px 20px; border-radius: 8px; font-size: 14px;
-    box-shadow: 0 12px 32px rgba(0,0,0,.5);
+    box-shadow: 0 12px 32px rgba(0,0,0,.6);
     transition: transform .28s cubic-bezier(.2,.8,.3,1); z-index: 40;
   }
   #toast.up { transform: translate(-50%, 0); }
-  #toast.bad { border-left-color: var(--signal); }
+  #toast.bad { border-left-color: var(--rec); }
 
   .keybar {
-    margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--mat-edge);
+    margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--edge);
     display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
-    font-size: 13px; color: var(--tape);
+    font-size: 13px; color: var(--dim);
   }
   .keybar input {
-    background: var(--mat-raised); border: 1px solid var(--mat-edge); color: var(--chalk);
+    background: var(--panel); border: 1px solid var(--edge); color: var(--paper);
     padding: 9px 12px; border-radius: 6px; font-family: var(--mono); font-size: 13px; min-width: 240px;
   }
-  .keybar input:focus { outline: 2px solid var(--signal); outline-offset: 1px; }
+  .keybar input:focus { outline: 2px solid var(--yellow); outline-offset: 1px; }
   .keybar button {
-    background: none; border: 1px solid var(--mat-edge); color: var(--chalk);
+    background: none; border: 1px solid var(--edge); color: var(--paper);
     padding: 9px 16px; border-radius: 6px; cursor: pointer;
-    font-family: var(--display); letter-spacing: .1em; text-transform: uppercase; font-size: 13px;
+    font-family: var(--display); font-weight: 400; letter-spacing: .06em; text-transform: uppercase; font-size: 14px;
   }
-  .keybar button:hover { border-color: var(--signal); }
+  .keybar button:hover { border-color: var(--yellow); }
 
   @media (prefers-reduced-motion: reduce) {
     * { animation: none !important; transition: none !important; }
@@ -245,13 +250,11 @@
 
   <header>
     <svg class="mark" viewBox="0 0 40 40" aria-hidden="true">
-      <rect x="1.5" y="1.5" width="37" height="37" rx="9" fill="#1C2836" stroke="#2A3A4C"/>
-      <circle cx="20" cy="20" r="8.5" fill="#E4402E"/>
-      <circle cx="20" cy="20" r="3" fill="#F2EDE4"/>
-      <rect x="8" y="30.5" width="24" height="2" rx="1" fill="#2A3A4C"/>
+      <rect x="1.5" y="1.5" width="37" height="37" rx="9" fill="#161616" stroke="#2A2A2A"/>
+      <path d="M21.5 7 L11 22.5 H18.5 L17 33 L29 16.5 H21 Z" fill="#FFD400"/>
     </svg>
     <div>
-      <div class="wordmark">Gym <span>Rec</span></div>
+      <div class="wordmark">No <span>Flagra</span></div>
       <div class="tagline">{{ camera }} &middot; last {{ minutes }} min on tap</div>
     </div>
     <div class="status"><span class="dot" id="statusDot"></span><span id="statusText">checking</span></div>
