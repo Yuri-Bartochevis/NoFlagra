@@ -55,6 +55,11 @@
   header.site nav a { text-decoration: none; font-size: 14px; color: var(--dim); }
   header.site nav a:hover { color: var(--paper); }
 
+  .lang-switch { font-family: var(--display); font-size: 13px; letter-spacing: .06em; }
+  .lang-switch a { color: var(--edge-hi); padding: 2px 3px; }
+  .lang-switch a.active { color: var(--yellow); }
+  .lang-switch a:hover { color: var(--paper); }
+
   .btn {
     display: inline-block; font-family: var(--display); font-weight: 400;
     font-size: 16px; letter-spacing: .04em; text-transform: uppercase;
@@ -114,14 +119,18 @@
     <span class="wordmark">No <span>Flagra</span></span>
   </a>
   <nav>
+    <span class="lang-switch">
+      <a href="{{ request.path }}?lang=pt" class="{{ 'active' if locale == 'pt' }}">PT</a>
+      <a href="{{ request.path }}?lang=en" class="{{ 'active' if locale == 'en' }}">EN</a>
+    </span>
     {% if current_user.is_authenticated %}
-      <a href="{{ url_for('dashboard.home') }}">Dashboard</a>
+      <a href="{{ url_for('dashboard.home') }}">{{ t('nav_dashboard') }}</a>
       <form action="{{ url_for('auth.logout') }}" method="post" style="display:inline;">
-        <button class="btn btn-ghost" type="submit" style="padding:8px 16px;font-size:13px;">Log out</button>
+        <button class="btn btn-ghost" type="submit" style="padding:8px 16px;font-size:13px;">{{ t('nav_logout') }}</button>
       </form>
     {% else %}
-      <a href="{{ url_for('auth.login') }}">Log in</a>
-      <a class="btn btn-primary" style="padding:8px 18px;font-size:13px;" href="{{ url_for('auth.signup') }}">Start your gym</a>
+      <a href="{{ url_for('auth.login') }}">{{ t('nav_login') }}</a>
+      <a class="btn btn-primary" style="padding:8px 18px;font-size:13px;" href="{{ url_for('auth.signup') }}">{{ t('nav_start_gym') }}</a>
     {% endif %}
   </nav>
 </header>
@@ -140,7 +149,7 @@
 
 <footer class="site">
   <span>&copy; NO FLAGRA</span>
-  <span><a href="mailto:hello@noflagra.app">contact</a> &middot; <a href="https://github.com/Yuri-Bartochevis/NoFlagra">github</a></span>
+  <span><a href="mailto:hello@noflagra.app">{{ t('footer_contact') }}</a> &middot; <a href="https://github.com/Yuri-Bartochevis/NoFlagra">github</a></span>
 </footer>
 
 </body>

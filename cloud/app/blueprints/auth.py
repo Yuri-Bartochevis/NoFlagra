@@ -2,6 +2,7 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import login_user, logout_user
 
 from ..extensions import db
+from ..i18n import t
 from ..models import Establishment, Membership, User, make_slug
 
 auth_bp = Blueprint("auth", __name__)
@@ -19,15 +20,15 @@ def signup():
 
     errors = []
     if not name:
-        errors.append("Enter your name.")
+        errors.append(t("err_name_required"))
     if not email or "@" not in email:
-        errors.append("Enter a valid email.")
+        errors.append(t("err_email_invalid"))
     if not gym_name:
-        errors.append("Enter your gym's name.")
+        errors.append(t("err_gym_required"))
     if len(password) < 8:
-        errors.append("Password must be at least 8 characters.")
+        errors.append(t("err_password_short"))
     if email and User.query.filter_by(email=email).first():
-        errors.append("An account with that email already exists — log in instead.")
+        errors.append(t("err_email_taken"))
 
     if errors:
         for error in errors:
@@ -56,7 +57,7 @@ def login():
 
     user = User.query.filter_by(email=email).first()
     if user is None or not user.check_password(password):
-        flash("Wrong email or password.", "error")
+        flash(t("err_wrong_login"), "error")
         return render_template("login.html", email=email), 401
 
     login_user(user)

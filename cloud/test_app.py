@@ -40,12 +40,27 @@ def signup(client, email="yuri@example.com", password="supersecret1", gym_name="
 # ---- public site ----
 
 
-def test_landing_page_renders(client):
+def test_landing_page_renders_in_portuguese_by_default(client):
     resp = client.get("/")
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8").upper()
+    assert "NUNCA PERCA O MOMENTO" in body
+    assert "COMECE SUA ACADEMIA" in body
+
+
+def test_landing_page_switches_to_english(client):
+    resp = client.get("/?lang=en")
     assert resp.status_code == 200
     body = resp.data.upper()
     assert b"NEVER MISS THE MOMENT" in body
     assert b"START YOUR GYM" in body
+    assert resp.headers["Set-Cookie"].startswith("lang=en")
+
+
+def test_language_choice_is_remembered_via_cookie(client):
+    client.get("/?lang=en")
+    resp = client.get("/")
+    assert b"NEVER MISS THE MOMENT" in resp.data.upper()
 
 
 def test_health_reports_database_reachable(client):
@@ -87,7 +102,7 @@ def test_signup_rejects_duplicate_email(client):
     signup(client)
     resp = signup(client, name="Someone Else", gym_name="Another Gym")
     assert resp.status_code == 400
-    assert b"already exists" in resp.data
+    assert "Já existe uma conta".encode() in resp.data
 
 
 def test_signup_rejects_short_password(client):

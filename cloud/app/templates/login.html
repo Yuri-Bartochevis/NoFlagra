@@ -1,17 +1,17 @@
 {% extends "base.html" %}
-{% block title %}Log in — NO FLAGRA{% endblock %}
+{% block title %}{{ t('login_title') }} — NO FLAGRA{% endblock %}
 {% block content %}
 <form class="card" method="post">
-  <h1>Log in</h1>
+  <h1>{{ t('login_title') }}</h1>
 
-  <label for="email">Email</label>
+  <label for="email">{{ t('label_email') }}</label>
   <input id="email" name="email" type="email" value="{{ email or '' }}" required autofocus>
 
-  <label for="password">Password</label>
+  <label for="password">{{ t('label_password') }}</label>
   <input id="password" name="password" type="password" required>
 
-  <button class="btn btn-primary" type="submit">Log in</button>
+  <button class="btn btn-primary" type="submit">{{ t('btn_login') }}</button>
 
-  <p class="hint">New here? <a href="{{ url_for('auth.signup') }}">Start your gym</a></p>
+  <p class="hint">{{ t('hint_new_here') }} <a href="{{ url_for('auth.signup') }}">{{ t('nav_start_gym') }}</a></p>
 </form>
 {% endblock %}

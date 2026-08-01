@@ -1,23 +1,23 @@
 {% extends "base.html" %}
-{% block title %}Start your gym — NO FLAGRA{% endblock %}
+{% block title %}{{ t('signup_title') }} — NO FLAGRA{% endblock %}
 {% block content %}
 <form class="card" method="post">
-  <h1>Start your gym</h1>
+  <h1>{{ t('signup_title') }}</h1>
 
-  <label for="gym_name">Gym name</label>
+  <label for="gym_name">{{ t('label_gym_name') }}</label>
   <input id="gym_name" name="gym_name" type="text" value="{{ gym_name or '' }}" required autofocus>
 
-  <label for="name">Your name</label>
+  <label for="name">{{ t('label_your_name') }}</label>
   <input id="name" name="name" type="text" value="{{ name or '' }}" required>
 
-  <label for="email">Email</label>
+  <label for="email">{{ t('label_email') }}</label>
   <input id="email" name="email" type="email" value="{{ email or '' }}" required>
 
-  <label for="password">Password</label>
+  <label for="password">{{ t('label_password') }}</label>
   <input id="password" name="password" type="password" minlength="8" required>
 
-  <button class="btn btn-primary" type="submit">Create account</button>
+  <button class="btn btn-primary" type="submit">{{ t('btn_create_account') }}</button>
 
-  <p class="hint">Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a></p>
+  <p class="hint">{{ t('hint_have_account') }} <a href="{{ url_for('auth.login') }}">{{ t('nav_login') }}</a></p>
 </form>
 {% endblock %}

@@ -1,8 +1,9 @@
 import os
 
-from flask import Flask
+from flask import Flask, request
 
 from .extensions import db, login_manager, migrate
+from .i18n import LOCALES, get_locale, t
 
 
 def create_app():
@@ -15,6 +16,17 @@ def create_app():
 
     db.init_app(app)
     migrate.init_app(app, db)
+
+    @app.context_processor
+    def inject_i18n():
+        return {"t": t, "locale": get_locale()}
+
+    @app.after_request
+    def remember_locale(response):
+        lang = request.args.get("lang")
+        if lang in LOCALES:
+            response.set_cookie("lang", lang, max_age=60 * 60 * 24 * 365)
+        return response
 
     login_manager.init_app(app)
     login_manager.login_view = "auth.login"

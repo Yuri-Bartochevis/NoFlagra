@@ -83,35 +83,34 @@
 {% block content %}
 
 <div class="hero">
-  <h1>Never miss the moment.</h1>
-  <p>Press a button mat-side. Get the last 10 minutes, cut from continuous
-     recording and ready to watch — before you even walk off the mat.</p>
-  <a class="btn btn-primary" href="{{ url_for('auth.signup') }}">Start your gym</a>
+  <h1>{{ t('hero_h1') }}</h1>
+  <p>{{ t('hero_p') }}</p>
+  <a class="btn btn-primary" href="{{ url_for('auth.signup') }}">{{ t('nav_start_gym') }}</a>
 </div>
 
 <section class="band">
   <div class="inner">
-    <div class="eyebrow">How it works</div>
+    <div class="eyebrow">{{ t('eyebrow_how') }}</div>
     <div class="steps">
       <div class="step">
         <div class="num">1</div>
-        <h3>Press</h3>
-        <p>One button by the mat. No camera operator, no phone to dig out mid-roll.</p>
+        <h3>{{ t('step1_h') }}</h3>
+        <p>{{ t('step1_p') }}</p>
       </div>
       <div class="step">
         <div class="num">2</div>
-        <h3>Cut</h3>
-        <p>The camera's already been rolling — the button just cuts the last 10 minutes from it.</p>
+        <h3>{{ t('step2_h') }}</h3>
+        <p>{{ t('step2_p') }}</p>
       </div>
       <div class="step">
         <div class="num">3</div>
-        <h3>Review</h3>
-        <p>The clip shows up in your gym's library, ready to watch from your phone in seconds.</p>
+        <h3>{{ t('step3_h') }}</h3>
+        <p>{{ t('step3_p') }}</p>
       </div>
       <div class="step">
         <div class="num">4</div>
-        <h3>Share</h3>
-        <p>Send it to your training partner, your coach, or save it for the next belt review.</p>
+        <h3>{{ t('step4_h') }}</h3>
+        <p>{{ t('step4_p') }}</p>
       </div>
     </div>
   </div>
@@ -119,23 +118,23 @@
 
 <section class="band">
   <div class="inner">
-    <div class="eyebrow">Why gyms use it</div>
+    <div class="eyebrow">{{ t('eyebrow_why') }}</div>
     <div class="benefits">
       <div class="benefit">
-        <h3>Never miss a submission</h3>
-        <p>The camera never stops rolling, so the moment is already saved by the time anyone thinks to hit record.</p>
+        <h3>{{ t('benefit1_h') }}</h3>
+        <p>{{ t('benefit1_p') }}</p>
       </div>
       <div class="benefit">
-        <h3>One button, no operator</h3>
-        <p>Anyone on the mat can save a clip mid-roll. Nobody's job is "hold the phone."</p>
+        <h3>{{ t('benefit2_h') }}</h3>
+        <p>{{ t('benefit2_p') }}</p>
       </div>
       <div class="benefit">
-        <h3>One login for everyone</h3>
-        <p>Every member of your gym gets access to the same clip library — no shared phone, no group chat dump.</p>
+        <h3>{{ t('benefit3_h') }}</h3>
+        <p>{{ t('benefit3_p') }}</p>
       </div>
       <div class="benefit">
-        <h3>A running history</h3>
-        <p>Every saved clip lives in the cloud, searchable by day, ready whenever you want to look back.</p>
+        <h3>{{ t('benefit4_h') }}</h3>
+        <p>{{ t('benefit4_p') }}</p>
       </div>
     </div>
   </div>
@@ -144,13 +143,11 @@
 <section class="band">
   <div class="inner showcase">
     <div>
-      <h2>See it in action</h2>
-      <p>This is the actual dashboard your gym gets: a live view of the mat,
-         one big button, and every saved clip grouped by day — black and
-         yellow, built to be readable from across the room.</p>
+      <h2>{{ t('showcase_h') }}</h2>
+      <p>{{ t('showcase_p') }}</p>
     </div>
     <div class="mock" aria-hidden="true">
-      <div class="mock-viewport">live view</div>
+      <div class="mock-viewport">{{ t('mock_live') }}</div>
       <div class="mock-btn"></div>
       <div class="mock-row">
         <div class="mock-card"></div>
@@ -162,11 +159,11 @@
 </section>
 
 <section class="band cta-band">
-  <h2>Ready to put one on your mat?</h2>
-  <a class="btn btn-primary" href="{{ url_for('auth.signup') }}">Start your gym</a>
+  <h2>{{ t('cta_band_h') }}</h2>
+  <a class="btn btn-primary" href="{{ url_for('auth.signup') }}">{{ t('nav_start_gym') }}</a>
   <p style="color:var(--dim);font-size:14px;margin-top:18px;">
-    Setting up more than one location, or want to talk pricing first?
-    <a href="mailto:hello@noflagra.app" style="color:var(--yellow);">Get in touch</a>.
+    {{ t('cta_band_p') }}
+    <a href="mailto:hello@noflagra.app" style="color:var(--yellow);">{{ t('cta_band_link') }}</a>.
   </p>
 </section>
 
