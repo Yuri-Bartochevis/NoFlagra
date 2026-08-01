@@ -7,11 +7,14 @@ authenticated dashboard from one Flask app. See the root
 section for the full architecture and phase plan — this file is just local
 dev setup.
 
-**Phase 1 status:** the public landing page is real, and so is signup/login —
-`User`, `Establishment`, and `Membership` are live tables, "Start your gym"
-creates a real account, and `/app/*` is gated by a real session and scoped to
-the logged-in user's establishment. Not built yet: invites (adding a second
-person to a gym) and device pairing — those come next.
+**Phase 1 status:** the public landing page is real, signup/login work, and so
+does the admin invite flow — `/app/team` lets an admin invite by email
+(member or admin), the invite link goes to `/invite/<token>`, and accepting it
+creates the account (or, for an email that already has a NO FLAGRA account
+elsewhere, requires that account's real password before adding the
+membership — an invite link alone never logs anyone in). Not built yet:
+actually emailing the invite link (no mail provider wired up — the admin
+copies it from a flash message today) and device pairing.
 
 ## Run it
 
@@ -65,9 +68,13 @@ pip install -r requirements.txt pytest
 pytest -v
 ```
 
-Expect `12 passed` — landing page, health check, signup (including the admin
-membership it creates, duplicate-email/short-password rejection), login/logout,
-dashboard gating, and that two gyms can't see each other's establishment.
+Expect `22 passed` — landing page (PT default + EN toggle), health check,
+signup (including the admin membership it creates, duplicate-email/
+short-password rejection), login/logout, dashboard gating, tenant isolation,
+and the invite flow: creating/revoking invites, admin-only enforcement,
+duplicate/already-a-member rejection, a brand-new person accepting, an
+existing user having to prove their password before joining a second gym,
+and expired/revoked/already-accepted tokens all correctly refusing to work.
 
 ## Layout
 
@@ -77,11 +84,14 @@ cloud/
 │   ├── __init__.py          create_app() factory
 │   ├── extensions.py        shared Flask extensions (db, login_manager, migrate)
 │   ├── models.py            User, Establishment, Membership, Invite, Device, Clip
-│   ├── templates/           base.html + landing page, signup, login, dashboard placeholder
+│   ├── i18n.py               PT/EN translation dict + locale helper
+│   ├── templates/           base.html + landing page, signup, login, team,
+│   │                         invite acceptance, dashboard placeholder
 │   └── blueprints/
 │       ├── public.py        public_bp — / (landing page) and /health
-│       ├── auth.py          auth_bp — /signup, /login, /logout
-│       └── dashboard.py     dashboard_bp — /app/*, gated + establishment-scoped
+│       ├── auth.py          auth_bp — /signup, /login, /logout, /invite/<token>
+│       └── dashboard.py     dashboard_bp — /app/*, gated + establishment-scoped,
+│                             including /app/team (admin invite management)
 ├── migrations/               Alembic, via Flask-Migrate — commit these
 ├── test_app.py
 ├── wsgi.py                  gunicorn entrypoint

@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Team — {{ g.establishment.name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .team-wrap { max-width: 720px; margin: 40px auto; padding: 0 24px; }
+  .team-wrap h1 {
+    font-family: var(--display); font-weight: 400; text-transform: uppercase;
+    letter-spacing: .03em; font-size: 28px; margin: 0 0 8px;
+  }
+  .team-wrap .back { color: var(--dim); font-size: 13px; text-decoration: none; }
+  .team-wrap .back:hover { color: var(--paper); }
+
+  table.roster { width: 100%; border-collapse: collapse; margin: 20px 0 36px; }
+  table.roster th, table.roster td {
+    text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--edge); font-size: 14px;
+  }
+  table.roster th { color: var(--dim); font-weight: 400; text-transform: uppercase; font-size: 12px; letter-spacing: .06em; }
+  .role-pill {
+    display: inline-block; font-size: 11px; letter-spacing: .04em; text-transform: uppercase;
+    padding: 2px 8px; border-radius: 10px; border: 1px solid var(--edge); color: var(--dim);
+  }
+  .role-pill.admin { color: var(--ink-on-y); background: var(--yellow); border-color: var(--yellow); }
+
+  form.invite-form {
+    display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 30px;
+  }
+  form.invite-form div { flex: 1; min-width: 200px; }
+  form.invite-form label {
+    display: block; font-size: 12px; letter-spacing: .04em; text-transform: uppercase;
+    color: var(--dim); margin-bottom: 6px;
+  }
+  form.invite-form input, form.invite-form select {
+    width: 100%; background: var(--panel); border: 1px solid var(--edge); color: var(--paper);
+    padding: 10px 12px; border-radius: 6px; font-size: 14px;
+  }
+  form.invite-form .btn { padding: 10px 20px; font-size: 14px; }
+
+  .revoke-btn {
+    background: none; border: 1px solid var(--edge); color: var(--dim); border-radius: 5px;
+    padding: 4px 10px; font-size: 12px; cursor: pointer; font-family: var(--body);
+  }
+  .revoke-btn:hover { border-color: var(--rec); color: var(--rec); }
+  .empty-note { color: var(--dim); font-size: 14px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="team-wrap">
+  <a class="back" href="{{ url_for('dashboard.home') }}">&larr; {{ g.establishment.name }}</a>
+  <h1>Team</h1>
+
+  <table class="roster">
+    <thead><tr><th>Name</th><th>Email</th><th>Role</th></tr></thead>
+    <tbody>
+      {% for m in members %}
+      <tr>
+        <td>{{ m.user.name }}</td>
+        <td>{{ m.user.email }}</td>
+        <td><span class="role-pill {{ m.role }}">{{ m.role }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <form class="invite-form" method="post" action="{{ url_for('dashboard.create_invite') }}">
+    <div>
+      <label for="email">Invite by email</label>
+      <input id="email" name="email" type="email" required placeholder="teammate@example.com">
+    </div>
+    <div style="flex: 0 0 140px;">
+      <label for="role">Role</label>
+      <select id="role" name="role">
+        <option value="member">Member</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" type="submit">Send invite</button>
+  </form>
+
+  <h2 style="font-family:var(--display);font-weight:400;text-transform:uppercase;font-size:16px;letter-spacing:.06em;color:var(--dim);">
+    Pending invites
+  </h2>
+  {% if invites %}
+  <table class="roster">
+    <thead><tr><th>Email</th><th>Role</th><th>Expires</th><th></th></tr></thead>
+    <tbody>
+      {% for inv in invites %}
+      <tr>
+        <td>{{ inv.email }}</td>
+        <td><span class="role-pill {{ inv.role }}">{{ inv.role }}</span></td>
+        <td>{{ inv.expires_at.strftime('%Y-%m-%d') }}</td>
+        <td>
+          <form method="post" action="{{ url_for('dashboard.revoke_invite', invite_id=inv.id) }}" style="display:inline;">
+            <button class="revoke-btn" type="submit">Revoke</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty-note">No pending invites.</p>
+  {% endif %}
+</div>
+{% endblock %}

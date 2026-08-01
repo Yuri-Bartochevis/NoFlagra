@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Join {{ invite.establishment.name }} — NO FLAGRA{% endblock %}
+{% block content %}
+<form class="card" method="post">
+  <h1>Join {{ invite.establishment.name }}</h1>
+
+  {% if existing_account %}
+    <p style="color:var(--dim);font-size:14px;margin:0 0 8px;">
+      {{ invite.email }} already has an account — enter your password to join this gym.
+    </p>
+    <label for="password">{{ t('label_password') }}</label>
+    <input id="password" name="password" type="password" required autofocus>
+    <button class="btn btn-primary" type="submit">Log in and join</button>
+  {% else %}
+    <p style="color:var(--dim);font-size:14px;margin:0 0 8px;">
+      You're joining as <strong>{{ invite.email }}</strong>.
+    </p>
+    <label for="name">{{ t('label_your_name') }}</label>
+    <input id="name" name="name" type="text" value="{{ name or '' }}" required autofocus>
+
+    <label for="password">{{ t('label_password') }}</label>
+    <input id="password" name="password" type="password" minlength="8" required>
+
+    <button class="btn btn-primary" type="submit">Create account and join</button>
+  {% endif %}
+</form>
+{% endblock %}

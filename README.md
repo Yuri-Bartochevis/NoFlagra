@@ -159,7 +159,7 @@ relay that isn't needed to sell the clip library.
 /signup             "Start your gym" — creates User +
                      Establishment + Membership(admin)    — done
 /login, /logout      session login                        — done
-/invite/<token>       accept an invite, set a password     — Phase 1 (remaining)
+/invite/<token>       accept an invite, set a password     — done
 
 /app/                gated + establishment-scoped,          — done (placeholder),
                       placeholder today; Phase 4 replaces      Phase 4 for real content
@@ -171,7 +171,7 @@ relay that isn't needed to sell the clip library.
                           presigned S3 URLs
 /app/devices           admin: generate a pairing code,       — Phase 2
                         see each Pi's status
-/app/team               admin: invite/manage members          — Phase 1 (remaining)
+/app/team               admin: invite/manage members          — done
 ```
 
 ### Build order
@@ -183,8 +183,10 @@ running throughout.
    `frigate/`, `firmware/`, unchanged behavior) and `cloud/` (new Flask +
    Postgres app, `public_bp` + a `/health` route proving DB connectivity —
    see [`cloud/README.md`](cloud/README.md)).
-1. **Cloud identity & tenancy** — schema, login, "Start your gym" signup,
-   admin invites. Migrate the real gym through this flow.
+1. **Cloud identity & tenancy** *(app built)* — schema, login, "Start your
+   gym" signup, and the admin invite flow are all live. Still open: actually
+   migrating the real gym's account through this flow, and emailing invite
+   links instead of the admin copying them from a flash message.
 2. **Device pairing + clip metadata** — pairing codes, edge app posts clip
    metadata to the cloud after each export; playback still points at the
    Pi's LAN address.
@@ -215,8 +217,9 @@ tiers, multi-camera-per-gym, a mobile app, per-gym subdomains.
 - [ ] Deep sleep for battery life
 - [ ] Moved to the Raspberry Pi
 - [x] Public marketing site live at `/` — hero, how-it-works, benefits, showcase, CTA (Phase 5, pulled forward)
-- [x] Signup/login/logout, `Establishment` + admin `Membership`, `/app` gated and tenant-scoped (Phase 1, partial — invites still open)
-- [ ] Admin invite flow — add a second person to a gym (Phase 1 remaining)
+- [x] Signup/login/logout, `Establishment` + admin `Membership`, `/app` gated and tenant-scoped (Phase 1)
+- [x] Admin invite flow — invite by email/role, accept/revoke/expire, existing-account password check (Phase 1)
+- [x] Selling funnel (landing/signup/login) defaults to PT-BR, EN as a toggle
 - [ ] Device pairing + clip metadata in Postgres (Phase 2)
 - [ ] S3 upload pipeline (Phase 3)
 - [ ] Post-login dashboard replaced with the real black/yellow clip library (Phase 4)

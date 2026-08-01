@@ -1,10 +1,13 @@
+import hashlib
 import secrets
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from flask_login import UserMixin
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from .extensions import db
+
+INVITE_LIFETIME = timedelta(days=7)
 
 
 def _now():
@@ -41,6 +44,7 @@ class Establishment(db.Model):
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=_now)
 
     memberships = db.relationship("Membership", back_populates="establishment")
+    invites = db.relationship("Invite", back_populates="establishment")
     devices = db.relationship("Device", back_populates="establishment")
     clips = db.relationship("Clip", back_populates="establishment")
 
@@ -73,6 +77,18 @@ class Invite(db.Model):
     status = db.Column(db.String(32), nullable=False, default="pending")  # pending|accepted|expired|revoked
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=_now)
     expires_at = db.Column(db.DateTime(timezone=True), nullable=False)
+
+    establishment = db.relationship("Establishment", back_populates="invites")
+    invited_by = db.relationship("User")
+
+    @property
+    def is_usable(self):
+        expires = self.expires_at
+        if expires.tzinfo is None:
+            # SQLite drops tzinfo on round-trip even with DateTime(timezone=True);
+            # everything we write is UTC, so a naive value here means UTC.
+            expires = expires.replace(tzinfo=timezone.utc)
+        return self.status == "pending" and expires > _now()
 
 
 class Device(db.Model):
@@ -116,3 +132,14 @@ def make_slug(name: str) -> str:
         base = base.replace("--", "-")
     suffix = secrets.token_hex(3)
     return f"{base}-{suffix}" if base else suffix
+
+
+def generate_invite_token() -> str:
+    return secrets.token_urlsafe(32)
+
+
+def hash_invite_token(token: str) -> str:
+    # Sha256 (no salt) is fine here: the token is 32 bytes of CSPRNG entropy,
+    # not a low-entropy password, so a fast deterministic hash — which lets
+    # us look an invite up by token_hash directly — is the right trade-off.
+    return hashlib.sha256(token.encode()).hexdigest()

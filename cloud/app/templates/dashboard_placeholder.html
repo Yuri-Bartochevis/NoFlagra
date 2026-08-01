@@ -9,5 +9,8 @@
     You're in. The real clip library and live view land here in Phase 4 —
     for now this just proves login and establishment scoping work.
   </p>
+  {% if g.membership.role == 'admin' %}
+  <p><a href="{{ url_for('dashboard.team') }}" class="btn btn-ghost">Manage team</a></p>
+  {% endif %}
 </div>
 {% endblock %}
