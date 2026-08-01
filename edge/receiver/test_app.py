@@ -141,7 +141,7 @@ def test_dashboard_renders_with_branding(client):
     resp = client.get("/")
     assert resp.status_code == 200
     body = resp.get_data(as_text=True)
-    assert "GYM REC" in body.upper()
+    assert "NO FLAGRA" in body.upper()
     assert "Save" in body
 
 

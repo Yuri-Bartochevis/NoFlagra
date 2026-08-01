@@ -1,0 +1,8 @@
+flask==3.0.3
+gunicorn==22.0.0
+Flask-SQLAlchemy==3.1.1
+psycopg2-binary==2.9.9
+python-dotenv==1.0.1
+
+# Added in Phase 1 (accounts/tenancy): Flask-Login, Flask-Migrate
+# Added in Phase 3 (S3 upload pipeline): boto3

@@ -1,0 +1,22 @@
+# Secrets — never commit these
+.env
+frigate/config.real.yml
+
+# Recorded footage, exported clips, generated previews
+storage/*
+!storage/.gitkeep
+thumbs/*
+!thumbs/.gitkeep
+
+# Frigate writes these into the config directory at runtime
+frigate/frigate.db
+frigate/frigate.db-*
+frigate/.jwt_secret
+frigate/model_cache/
+frigate/*.log
+frigate/backup.db
+frigate/backup_config.yaml
+frigate/go2rtc_homekit.yml
+frigate/.exports
+frigate/.timeline
+frigate/.vacuum
