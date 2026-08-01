@@ -43,18 +43,3 @@ services:
     depends_on:
       - frigate
 
-  # ---- test rig only: a fake RTSP camera, so you can test the whole chain
-  # ---- before the real hardware arrives.
-  # ---- Start with:  docker compose --profile sim up
-  fakecam:
-    container_name: gir-fakecam
-    image: bluenviron/mediamtx:latest-ffmpeg
-    profiles: ["sim"]
-    restart: unless-stopped
-    environment:
-      MTX_PROTOCOLS: tcp
-      MTX_PATHS_MAT_RUNONINIT: >
-        ffmpeg -re -f lavfi -i testsrc=size=1280x720:rate=15
-        -c:v libx264 -preset ultrafast -tune zerolatency -g 30 -pix_fmt yuv420p
-        -f rtsp rtsp://localhost:8554/mat
-      MTX_PATHS_MAT_RUNONINITRESTART: "yes"
