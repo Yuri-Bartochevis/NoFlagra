@@ -1,0 +1,31 @@
+# One-click deploy for a test environment.
+#   Render dashboard -> New -> Blueprint -> point at this repo.
+# Everything below is free-tier; the web service sleeps after ~15 min idle
+# and takes ~50s to wake, which is fine for showing the site to someone but
+# not for a real launch.
+services:
+  - type: web
+    name: noflagra
+    runtime: docker
+    rootDir: cloud
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon # Render has no Brazil region; see cloud/README for Fly/GRU
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: noflagra-db
+          property: connectionString
+      - key: FLASK_SECRET_KEY
+        generateValue: true # random, stable across deploys — never the dev default
+      - key: WHATSAPP_NUMBER
+        sync: false # set in the dashboard
+      - key: WEB_CONCURRENCY
+        value: "2" # free tier has little memory; 4 workers is too many
+
+databases:
+  - name: noflagra-db
+    plan: free
+    databaseName: noflagra
+    user: noflagra

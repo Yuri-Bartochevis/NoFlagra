@@ -1,0 +1,10 @@
+# Without this, `COPY . .` bakes the local virtualenv (~210 MB) and test
+# caches into the image.
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.env
+*.sqlite
+.git/

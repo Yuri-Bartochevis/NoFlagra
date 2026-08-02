@@ -6,13 +6,29 @@ from .extensions import db, login_manager, migrate
 from .i18n import LOCALES, get_locale, t
 
 
+DEV_SECRET_KEY = "dev-insecure-change-me"
+
+
+def _database_url():
+    url = os.environ.get("DATABASE_URL", "postgresql://noflagra:noflagra@localhost:5432/noflagra")
+    # Render, Railway and Heroku all hand out "postgres://", a scheme
+    # SQLAlchemy 2.x dropped — without this the app dies at boot with
+    # "Can't load plugin: sqlalchemy.dialects:postgres".
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
+    return url
+
+
 def create_app():
     app = Flask(__name__)
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
-        "DATABASE_URL", "postgresql://noflagra:noflagra@localhost:5432/noflagra"
-    )
+    app.config["SQLALCHEMY_DATABASE_URI"] = _database_url()
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", "dev-insecure-change-me")
+    app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", DEV_SECRET_KEY)
+    if app.config["SECRET_KEY"] == DEV_SECRET_KEY:
+        # This key signs session cookies. Left at the default on a public
+        # deploy, anyone who reads this repo can forge a session for any
+        # user id — set FLASK_SECRET_KEY to a real random value.
+        app.logger.warning("FLASK_SECRET_KEY is unset — using the insecure dev default.")
     # Digits only, with country + area code — wa.me rejects punctuation.
     app.config["WHATSAPP_NUMBER"] = os.environ.get("WHATSAPP_NUMBER", "5511989449987")
 
