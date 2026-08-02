@@ -72,8 +72,13 @@ TRANSLATIONS = {
         "pricing_install_4": "Cabeamento e configuração",
         "pricing_install_5": "Visita, ajuste e treino da equipe",
         "pricing_monthly_label": "Mensalidade",
+        "pricing_from": "a partir de",
         "pricing_monthly_value": "R$ 150",
-        "pricing_monthly_unit": "por mês, por câmera",
+        "pricing_monthly_unit": "por mês, por câmera *",
+        "pricing_footnote": (
+            "* Valor por câmera. O total depende de quantas câmeras sua "
+            "academia usa — um tatame, uma câmera."
+        ),
         "pricing_monthly_1": "Biblioteca de clipes na nuvem",
         "pricing_monthly_2": "Logins ilimitados pra sua equipe",
         "pricing_monthly_3": "Atualizações e suporte incluídos",
@@ -222,8 +227,13 @@ TRANSLATIONS = {
         "pricing_install_4": "Cabling and configuration",
         "pricing_install_5": "On-site visit, tuning and team training",
         "pricing_monthly_label": "Monthly",
+        "pricing_from": "starting at",
         "pricing_monthly_value": "R$ 150",
-        "pricing_monthly_unit": "per month, per camera",
+        "pricing_monthly_unit": "per month, per camera *",
+        "pricing_footnote": (
+            "* Per camera. Your total depends on how many cameras your gym "
+            "uses — one mat, one camera."
+        ),
         "pricing_monthly_1": "Cloud clip library",
         "pricing_monthly_2": "Unlimited logins for your team",
         "pricing_monthly_3": "Updates and support included",

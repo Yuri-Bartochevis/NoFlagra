@@ -172,6 +172,7 @@
     text-transform: uppercase; color: var(--dim); margin: 0 0 14px;
   }
   .price-card.accent .label { color: var(--yellow); }
+  .price-card .from { color: var(--dim); font-size: 13px; margin: 0 0 4px; }
   .price-card .amount {
     font-family: var(--display); font-weight: 400; text-transform: uppercase;
     font-size: clamp(30px, 4.4vw, 44px); line-height: 1; color: var(--paper); margin: 0;
@@ -382,6 +383,8 @@
     <div class="price-grid">
       <div class="price-card">
         <p class="label">{{ t('pricing_install_label') }}</p>
+        {# keeps both cards' figures on the same baseline as the "from" line opposite #}
+        <p class="from" aria-hidden="true">&nbsp;</p>
         <p class="amount">{{ t('pricing_install_value') }}</p>
         <p class="unit">{{ t('pricing_install_note') }}</p>
         <ul>
@@ -402,6 +405,7 @@
 
       <div class="price-card accent">
         <p class="label">{{ t('pricing_monthly_label') }}</p>
+        <p class="from">{{ t('pricing_from') }}</p>
         <p class="amount">{{ t('pricing_monthly_value') }}</p>
         <p class="unit">{{ t('pricing_monthly_unit') }}</p>
         <ul>
@@ -421,7 +425,8 @@
       </div>
     </div>
 
-    <p class="price-note">{{ t('pricing_note') }}</p>
+    <p class="price-note">{{ t('pricing_footnote') }}</p>
+    <p class="price-note" style="margin-top:10px;">{{ t('pricing_note') }}</p>
   </div>
 </section>
 
