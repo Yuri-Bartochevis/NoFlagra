@@ -200,6 +200,21 @@ The Clip row's `s3_key` is the actual source of truth once Phase 3 writes
 it — the app never re-derives a path from convention, so this layout is a
 readability/ops convention, not something code depends on staying exact.
 
+## Implementation notes (Phase 2, as built)
+
+- `size_bytes` arrives as **0**. Frigate's export API returns before the file
+  exists, so the receiver has nothing to stat when it registers the clip.
+  Phase 3's uploader is what knows the real size, and is also what moves
+  `status` off `pending`.
+- `local_filename` is the export name the receiver *requested* plus `.mp4`.
+  If Frigate's on-disk naming differs, Phase 3's reconciliation is where that
+  gets resolved — it scans the exports directory anyway.
+- Posting a clip doubles as the device heartbeat (`last_seen_at`), so there's
+  no separate heartbeat route to build.
+- An unpaired Pi (no `CLOUD_URL`/`DEVICE_UUID`/`DEVICE_KEY`) skips the cloud
+  entirely and behaves exactly as it did in Phase 0. The gym running today
+  keeps working without being touched.
+
 ## Open questions (deliberately unresolved)
 
 - Pairing code regeneration/expiry UX for a device stuck mid-pairing.

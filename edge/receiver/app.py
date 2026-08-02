@@ -20,7 +20,7 @@ import os
 import threading
 import time
 from collections import deque
-from datetime import datetime
+from datetime import datetime, timezone
 
 import requests
 from flask import Flask, jsonify, render_template, request, send_from_directory
@@ -55,6 +55,15 @@ THUMBS_DIR = os.environ.get("THUMBS_DIR", "/thumbs")
 # interesting moment is right before the press, not the start of the window.
 THUMB_OFFSET_SECONDS = _env_int("THUMB_OFFSET_SECONDS", 25)
 PAGE_SIZE = _env_int("PAGE_SIZE", 12)
+
+# --- cloud link (Phase 2) --------------------------------------------------
+# Written by tools/pair_device.py. All three unset means this Pi hasn't been
+# paired, and the receiver runs exactly as it did before the cloud existed —
+# the gym running today must keep working untouched.
+CLOUD_URL = os.environ.get("CLOUD_URL", "").rstrip("/")
+DEVICE_UUID = os.environ.get("DEVICE_UUID", "")
+DEVICE_KEY = os.environ.get("DEVICE_KEY", "")
+CLOUD_TIMEOUT = _env_int("CLOUD_TIMEOUT", 10)
 
 app = Flask(__name__)
 
@@ -95,6 +104,57 @@ def export_range(camera, start_ts, end_ts, name):
         return True, resp.text
 
 
+def cloud_paired():
+    return bool(CLOUD_URL and DEVICE_UUID and DEVICE_KEY)
+
+
+def _iso(ts):
+    return datetime.fromtimestamp(ts, tz=timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def post_clip_metadata(press_ts, start_ts, end_ts, name):
+    """Tell the cloud a clip exists. Best effort — never raises.
+
+    Deliberately fire-and-forget: the clip is already safe on local disk, and
+    the whole point of the edge/cloud split is that a cloud outage must not
+    affect recording. A failure here just means the row shows up later, once
+    Phase 3's retry queue reconciles what's on disk against what's in the
+    cloud.
+
+    size_bytes is 0 because Frigate exports asynchronously — the file does
+    not exist yet when the export API returns. Phase 3 fills in the real
+    size at upload time, which is also when status leaves "pending".
+    """
+    if not cloud_paired():
+        return None
+
+    payload = {
+        "camera_name": CAMERA_NAME,
+        "pressed_at": _iso(press_ts),
+        "start_ts": _iso(start_ts),
+        "end_ts": _iso(end_ts),
+        "duration_seconds": int(end_ts - start_ts),
+        "size_bytes": 0,
+        "local_filename": f"{name}.mp4",
+    }
+    try:
+        resp = requests.post(
+            f"{CLOUD_URL}/api/clips",
+            json=payload,
+            headers={"Authorization": f"Device {DEVICE_UUID}:{DEVICE_KEY}"},
+            timeout=CLOUD_TIMEOUT,
+        )
+    except requests.RequestException as exc:
+        log(f"Cloud unreachable, clip {name} not registered: {exc}")
+        return None
+
+    if resp.status_code == 201:
+        log(f"Clip {name} registered with the cloud")
+        return resp
+    log(f"Cloud rejected clip {name}: HTTP {resp.status_code} {resp.text.strip()[:200]}")
+    return resp
+
+
 def _deferred_export(press_ts, name):
     """Wait out the post-roll, then export. Runs on a background thread."""
     time.sleep(POST_ROLL_SECONDS)
@@ -115,6 +175,9 @@ def _deferred_export(press_ts, name):
 
     if ok:
         log(f"Export requested: {name} ({LOOKBACK_SECONDS}s lookback) -> {detail}")
+        # Only after a successful export: a clip that never got cut has
+        # nothing to register.
+        post_clip_metadata(press_ts, start_ts, end_ts, name)
     else:
         log(f"EXPORT FAILED for {name}: {detail}")
 
@@ -342,6 +405,10 @@ def health():
         "cooldown_seconds": COOLDOWN_SECONDS,
         "cooldown_active": since is not None and since < COOLDOWN_SECONDS,
         "duplicates_blocked": _blocked,
+        "cloud_paired": cloud_paired(),
+        # The key itself never leaves this process.
+        "cloud_url": CLOUD_URL or None,
+        "device_uuid": DEVICE_UUID or None,
     }
     try:
         resp = requests.get(f"{FRIGATE_URL}/api/version", timeout=3)

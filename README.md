@@ -194,12 +194,17 @@ running throughout.
    gym" signup, and the admin invite flow are all live. Still open: actually
    migrating the real gym's account through this flow, and emailing invite
    links instead of the admin copying them from a flash message.
-2. **Device pairing + clip metadata** — pairing is a pair of CLI scripts
-   (admin-side and Pi-side) talking to a device-facing API, not a dashboard
-   page; one device (UUID-identified) per account, many cameras per device.
-   The edge app posts clip metadata to the cloud after each export; playback
-   still points at the Pi's LAN address. Full design in
-   [`docs/infrastructure.md`](docs/infrastructure.md).
+2. **Device pairing + clip metadata** *(done)* — pairing is a pair of CLI
+   scripts (`cloud/scripts/create_pairing_code.py` and
+   `edge/tools/pair_device.py`) talking to a device-facing API, not a
+   dashboard page; one device (UUID-identified) per account, many cameras per
+   device. The receiver posts clip metadata after each export, best effort,
+   so a cloud outage never affects recording; an unpaired Pi behaves exactly
+   as it did before the cloud existed. Playback still points at the Pi's LAN
+   address. Full design in [`docs/infrastructure.md`](docs/infrastructure.md).
+   Known gap carried into Phase 3: `size_bytes` is posted as 0, because
+   Frigate exports asynchronously and the file doesn't exist yet when the
+   export API returns — the uploader fills in the real size.
 3. **S3 upload pipeline** — presigned PUT/GET URLs, a durable upload-retry
    queue on the Pi (survives a reboot mid-upload).
 4. **Ship the branded post-login app** — the dashboard moves to `/app`,
@@ -230,7 +235,7 @@ tiers, multi-camera-per-gym, a mobile app, per-gym subdomains.
 - [x] Signup/login/logout, `Establishment` + admin `Membership`, `/app` gated and tenant-scoped (Phase 1)
 - [x] Admin invite flow — invite by email/role, accept/revoke/expire, existing-account password check (Phase 1)
 - [x] Selling funnel (landing/signup/login) defaults to PT-BR, EN as a toggle
-- [ ] Device pairing + clip metadata in Postgres (Phase 2)
+- [x] Device pairing (UUID + hashed key, script-driven) and clip metadata posted to the cloud after each export (Phase 2)
 - [ ] S3 upload pipeline (Phase 3)
 - [ ] Post-login dashboard replaced with the real black/yellow clip library (Phase 4)
 - [ ] Second gym onboarded (Phase 6)

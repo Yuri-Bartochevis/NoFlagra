@@ -23,6 +23,10 @@ def client():
     receiver.LOOKBACK_SECONDS = 600
     receiver.SHARED_SECRET = "test-secret"
     receiver.DRY_RUN = True  # stray background threads must not hit the network
+    # Unpaired by default, so no test accidentally reaches for the cloud.
+    receiver.CLOUD_URL = ""
+    receiver.DEVICE_UUID = ""
+    receiver.DEVICE_KEY = ""
     for t in receiver._threads:
         t.join(timeout=2)
     receiver._threads.clear()
@@ -346,3 +350,106 @@ def test_unauthorised_requests_never_start_a_cooldown(client):
     with patch.object(receiver, "export_range", return_value=(True, {})):
         assert press(client).status_code == 202
         drain()
+
+
+# ---- cloud registration (Phase 2) ----
+
+
+def pair_receiver():
+    receiver.CLOUD_URL = "https://cloud.example"
+    receiver.DEVICE_UUID = "abc-123"
+    receiver.DEVICE_KEY = "secret-device-key"
+
+
+def test_unpaired_receiver_never_calls_the_cloud(client):
+    """The gym running today isn't paired, and must keep working untouched."""
+    with patch.object(receiver, "export_range", return_value=(True, {})), \
+            patch.object(receiver.requests, "post") as post:
+        assert press(client).status_code == 202
+        drain()
+    post.assert_not_called()
+    assert receiver.cloud_paired() is False
+
+
+def test_paired_receiver_registers_the_clip(client):
+    pair_receiver()
+    receiver.LOOKBACK_SECONDS = 600
+    receiver.POST_ROLL_SECONDS = 0
+
+    with patch.object(receiver, "export_range", return_value=(True, {})), \
+            patch.object(receiver.requests, "post") as post:
+        post.return_value.status_code = 201
+        assert press(client).status_code == 202
+        drain()
+
+    post.assert_called_once()
+    url = post.call_args.args[0]
+    body = post.call_args.kwargs["json"]
+    headers = post.call_args.kwargs["headers"]
+
+    assert url == "https://cloud.example/api/clips"
+    assert headers["Authorization"] == "Device abc-123:secret-device-key"
+    assert body["camera_name"] == receiver.CAMERA_NAME
+    assert body["duration_seconds"] == 600  # lookback + post-roll(0)
+    assert body["local_filename"].endswith(".mp4")
+    # timestamps go up as UTC ISO 8601, which is what the cloud parses
+    for field in ("pressed_at", "start_ts", "end_ts"):
+        assert body[field].endswith("Z"), body[field]
+    assert body["start_ts"] < body["pressed_at"] <= body["end_ts"]
+
+
+def test_failed_export_is_not_registered(client):
+    pair_receiver()
+    with patch.object(receiver, "export_range", return_value=(False, "boom")), \
+            patch.object(receiver.requests, "post") as post:
+        press(client)
+        drain()
+    post.assert_not_called()
+
+
+def test_post_clip_metadata_swallows_network_errors(client):
+    """The "never raises" guarantee, tested directly.
+
+    Asserting it through press() would pass either way: the export thread
+    records into _recent *before* calling the cloud, and an exception there
+    only kills that thread — the request has already returned 202.
+    """
+    pair_receiver()
+    for boom in (
+        receiver.requests.RequestException("down"),
+        receiver.requests.Timeout("slow"),
+        receiver.requests.ConnectionError("refused"),
+    ):
+        with patch.object(receiver.requests, "post", side_effect=boom):
+            assert receiver.post_clip_metadata(1000.0, 400.0, 1015.0, "mat_x") is None
+
+
+def test_cloud_outage_does_not_break_the_export(client):
+    """A clip is already safe on local disk; the cloud is best effort."""
+    pair_receiver()
+    with patch.object(receiver, "export_range", return_value=(True, {})), \
+            patch.object(receiver.requests, "post",
+                         side_effect=receiver.requests.RequestException("down")):
+        assert press(client).status_code == 202
+        drain()
+    # the export still happened and is still listed locally
+    assert receiver._recent[-1]["ok"] is True
+
+
+def test_cloud_rejection_is_logged_not_raised(client):
+    pair_receiver()
+    with patch.object(receiver, "export_range", return_value=(True, {})), \
+            patch.object(receiver.requests, "post") as post:
+        post.return_value.status_code = 401
+        post.return_value.text = '{"error":"unauthorized"}'
+        assert press(client).status_code == 202
+        drain()
+    assert receiver._recent[-1]["ok"] is True
+
+
+def test_health_reports_pairing_without_leaking_the_key(client):
+    pair_receiver()
+    body = client.get("/health").get_json()
+    assert body["cloud_paired"] is True
+    assert body["device_uuid"] == "abc-123"
+    assert "secret-device-key" not in str(body)
