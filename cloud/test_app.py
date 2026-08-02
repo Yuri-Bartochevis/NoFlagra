@@ -77,6 +77,97 @@ def test_health_reports_database_reachable(client):
     assert resp.get_json() == {"status": "ok", "database": "reachable"}
 
 
+# ---- lang attribute, meta and social cards ----
+
+
+def test_portuguese_pages_declare_pt_br(client):
+    # Regression: base.html used to hardcode lang="en" for every locale,
+    # so screen readers read Portuguese copy with an English voice.
+    assert b'<html lang="pt-BR">' in client.get("/").data
+    assert b'<html lang="en">' in client.get("/?lang=en").data
+
+
+def test_pages_carry_a_description_and_canonical(client):
+    body = client.get("/").data.decode("utf-8")
+    assert 'name="description"' in body
+    assert 'rel="canonical"' in body
+
+
+def test_social_card_is_absolute_and_locale_specific(client):
+    # og:image must be absolute — WhatsApp silently drops a relative one,
+    # and the funnel's main path is someone forwarding this link.
+    pt = client.get("/").data.decode("utf-8")
+    en = client.get("/?lang=en").data.decode("utf-8")
+    assert 'property="og:image" content="https://' in pt
+    assert "/static/og.jpg" in pt
+    assert "/static/og-en.jpg" in en
+    assert 'name="twitter:card" content="summary_large_image"' in pt
+
+
+def test_showcase_uses_the_real_mat_footage(client):
+    body = client.get("/").data.decode("utf-8")
+    assert "mat-demo.mp4" in body
+    assert "mat-poster.jpg" in body
+
+
+def test_button_photo_slot_stays_empty_until_the_file_exists(app, client):
+    # The slot must not render a broken <img> before the photo is shot.
+    from app import create_app  # noqa: F401 — documents where the helper lives
+
+    exists = app.jinja_env.globals["static_exists"]
+    assert exists("mat-poster.jpg") is True
+    assert exists("button.jpg") is False
+    if not exists("button.jpg"):
+        assert b"button.jpg" not in client.get("/").data
+
+
+# ---- about, legal, robots, sitemap ----
+
+
+def test_about_page_renders_in_both_locales(client):
+    assert "cansou de perder" in client.get("/sobre").data.decode("utf-8")
+    assert "tired of missing" in client.get("/sobre?lang=en").data.decode("utf-8")
+
+
+def test_privacy_page_covers_controller_and_operator_roles(client):
+    body = client.get("/privacidade").data.decode("utf-8")
+    assert "LGPD" in body
+    assert "controladora" in body and "operador" in body
+
+
+def test_terms_page_renders(client):
+    assert "Termos de Uso" in client.get("/termos").data.decode("utf-8")
+
+
+def test_legal_pages_are_marked_as_draft(client):
+    # These are written from observed behaviour, not by a lawyer — the page
+    # has to say so out loud.
+    for path in ("/privacidade", "/termos"):
+        assert "revis" in client.get(path).data.decode("utf-8")
+
+
+def test_english_aliases_redirect_to_the_canonical_path(client):
+    for alias, target in (("/about", "/sobre"),
+                          ("/privacy", "/privacidade"),
+                          ("/terms", "/termos")):
+        resp = client.get(alias)
+        assert resp.status_code == 301
+        assert resp.headers["Location"].endswith(target)
+
+
+def test_robots_points_at_the_sitemap_and_hides_the_app(client):
+    body = client.get("/robots.txt").data.decode("utf-8")
+    assert "Sitemap: https://" in body
+    assert "Disallow: /app/" in body
+
+
+def test_sitemap_lists_the_public_pages_with_hreflang(client):
+    body = client.get("/sitemap.xml").data.decode("utf-8")
+    for path in ("/", "/sobre", "/privacidade", "/termos"):
+        assert f"<loc>https://noflagra.onrender.com{path}</loc>" in body
+    assert 'hreflang="pt-BR"' in body and 'hreflang="en"' in body
+
+
 # ---- signup ----
 
 

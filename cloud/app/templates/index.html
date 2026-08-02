@@ -214,6 +214,44 @@
   }
   .contact p { color: var(--dim); font-size: 16px; line-height: 1.6; max-width: 480px; margin: 0 auto 30px; }
   .contact .row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+  /* ---- showcase: the real mat, from the real camera ----------------- */
+  .shot-wrap {
+    position: relative; max-width: 860px; margin: 0 auto;
+    border: 1px solid var(--edge); border-radius: 14px; overflow: hidden;
+    background: var(--panel-deep); box-shadow: 0 24px 60px rgba(0,0,0,.5);
+  }
+  .shot-wrap video, .shot-wrap img { display: block; width: 100%; height: auto; }
+  .shot-badge {
+    position: absolute; top: 14px; left: 14px; display: flex; align-items: center;
+    gap: 7px; background: rgba(10,10,10,.78); border: 1px solid var(--edge);
+    border-radius: 999px; padding: 6px 13px; font-size: 12px; letter-spacing: .07em;
+    text-transform: uppercase; font-family: var(--display); color: var(--paper);
+  }
+  .shot-badge b {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--rec);
+    animation: blink 1.6s steps(1, end) infinite;
+  }
+  @keyframes blink { 50% { opacity: .25; } }
+  .shot-cap {
+    text-align: center; color: var(--dim); font-size: 13px; line-height: 1.6;
+    margin: 18px auto 0; max-width: 620px;
+  }
+
+  /* ---- mid-page CTA band -------------------------------------------- */
+  .cta-band {
+    max-width: 1080px; margin: 0 auto; padding: 0 24px;
+  }
+  .cta-band .inner-band {
+    background: var(--panel); border: 1px solid var(--edge); border-left: 4px solid var(--yellow);
+    border-radius: 12px; padding: 28px 32px; display: flex; align-items: center;
+    justify-content: space-between; gap: 20px; flex-wrap: wrap;
+  }
+  .cta-band h3 {
+    font-family: var(--display); font-weight: 400; text-transform: uppercase;
+    letter-spacing: .03em; font-size: 24px; margin: 0 0 6px; color: var(--paper);
+  }
+  .cta-band p { margin: 0; color: var(--dim); font-size: 15px; }
 </style>
 {% endblock %}
 
@@ -344,6 +382,16 @@
         <p>{{ t('kit4_p') }}</p>
       </div>
     </div>
+
+    {# Slot for the real button photo. Drop a file at app/static/button.jpg
+       and this appears on its own — no template change needed. Until then
+       the section simply ends after the four cards. #}
+    {% if static_exists('button.jpg') %}
+    <div class="shot-wrap" style="max-width:620px;margin-top:34px;">
+      <img src="{{ url_for('static', filename='button.jpg') }}"
+           alt="{{ t('button_photo_alt') }}" loading="lazy">
+    </div>
+    {% endif %}
   </div>
 </section>
 
@@ -371,6 +419,29 @@
       </div>
       {% endfor %}
     </div>
+  </div>
+</section>
+
+{# ---------- see it in action ---------- #}
+{# Real footage from a real mat camera, not a mockup — the copy claims "this
+   is what your gym gets", so it has to be the actual thing. Muted + inline +
+   loop so it plays as a moving screenshot rather than something to sit
+   through; `preload="none"` keeps the 400 KB off the initial page load. #}
+<section class="band" id="veja">
+  <div class="inner">
+    <div class="eyebrow">{{ t('eyebrow_showcase') }}</div>
+    <h2 class="band-h">{{ t('showcase_h') }}</h2>
+    <p class="band-lead">{{ t('showcase_p') }}</p>
+
+    <div class="shot-wrap">
+      <video
+        src="{{ url_for('static', filename='mat-demo.mp4') }}"
+        poster="{{ url_for('static', filename='mat-poster.jpg') }}"
+        autoplay muted loop playsinline preload="none"
+        aria-label="{{ t('showcase_video_alt') }}"></video>
+      <span class="shot-badge"><b></b>{{ t('showcase_badge') }}</span>
+    </div>
+    <p class="shot-cap">{{ t('showcase_caption') }}</p>
   </div>
 </section>
 
@@ -427,6 +498,20 @@
 
     <p class="price-note">{{ t('pricing_footnote') }}</p>
     <p class="price-note" style="margin-top:10px;">{{ t('pricing_note') }}</p>
+  </div>
+</section>
+
+{# ---------- mid-page CTA ---------- #}
+{# Sits after pricing rather than at the very bottom: the closing #orcamento
+   section already carries the final ask, and two near-identical "let's put
+   one on your mat" blocks in a row read as filler. #}
+<section class="cta-band">
+  <div class="inner-band">
+    <div>
+      <h3>{{ t('cta_band_h') }}</h3>
+      <p>{{ t('cta_band_p') }}</p>
+    </div>
+    <a class="btn btn-primary" href="#orcamento">{{ t('cta_band_link') }}</a>
   </div>
 </section>
 

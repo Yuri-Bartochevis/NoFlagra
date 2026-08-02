@@ -142,6 +142,79 @@ TRANSLATIONS = {
         "wa_open": "Abrir conversa no WhatsApp",
         "wa_close": "Fechar",
         "footer_contact": "contato",
+        "nav_about": "Sobre",
+        "nav_privacy": "Privacidade",
+        "nav_terms": "Termos",
+        "meta_desc": (
+            "Um botão do lado do tatame salva os últimos 10 minutos de "
+            "treino. Câmera, botão e gravador instalados na sua academia, "
+            "com biblioteca de clipes na nuvem. A partir de R$ 150/mês."
+        ),
+        "og_image_alt": "Tatame de jiu-jitsu visto pela câmera do NO FLAGRA",
+        "eyebrow_showcase": "Veja funcionando",
+        "showcase_badge": "gravando",
+        "showcase_video_alt": (
+            "Treino de jiu-jitsu no tatame, gravado pela câmera fixa do NO FLAGRA"
+        ),
+        "showcase_caption": (
+            "Filmagem real de uma câmera NO FLAGRA instalada. É esse "
+            "enquadramento que fica gravando o tempo todo — o botão só "
+            "recorta os últimos 10 minutos dele."
+        ),
+        "button_photo_alt": "O botão NO FLAGRA instalado na beira do tatame",
+        "legal_updated": "Atualizado em",
+        "legal_back": "Voltar para a página inicial",
+        "meta_desc_about": (
+            "Quem faz o NO FLAGRA: por que um botão do lado do tatame resolve "
+            "melhor o problema de gravar treino do que um cameraman."
+        ),
+        "about_title": "Sobre",
+        "about_h1": "Feito por quem cansou de perder a finalização.",
+        "about_lead": (
+            "O NO FLAGRA nasceu de um problema chato e muito específico: a "
+            "melhor coisa que acontece no treino quase nunca está sendo "
+            "filmada."
+        ),
+        "about_s1_h": "O problema",
+        "about_s1_p": (
+            "Todo mundo que treina conhece a cena. Rolou uma passagem "
+            "perfeita, uma raspagem que ninguém esperava, uma finalização "
+            "que você tentou por seis meses — e ninguém filmou. Quando "
+            "alguém lembra do celular, o momento já passou. Pedir pra "
+            "alguém ficar de fora do treino segurando o telefone resolve "
+            "gravando, mas tira uma pessoa do tatame."
+        ),
+        "about_s2_h": "A ideia",
+        "about_s2_p": (
+            "A gente inverteu a ordem. Em vez de começar a gravar quando "
+            "algo acontece, a câmera grava o tatame o tempo todo, num "
+            "gravador que fica dentro da academia. O botão não liga câmera "
+            "nenhuma: ele recorta os últimos 10 minutos do que já estava "
+            "gravado. O botão é uma tesoura, não uma câmera — por isso "
+            "funciona mesmo se você lembrar de apertar só depois que acabou."
+        ),
+        "about_s3_h": "Como a gente trabalha",
+        "about_s3_p": (
+            "A gente vai até a academia, instala, posiciona a câmera pra "
+            "pegar o tatame inteiro, testa com a sua equipe e deixa "
+            "rodando. Você não monta nada e não configura nada. Se der "
+            "problema, você fala com a gente no WhatsApp e quem responde é "
+            "quem construiu o sistema — não tem central de atendimento no "
+            "meio."
+        ),
+        "about_s4_h": "Onde estamos",
+        "about_s4_p": (
+            "O sistema roda hoje em academia de verdade, em uso diário, e "
+            "está sendo aberto para novas unidades. O código do projeto é "
+            "público no GitHub — dá pra ver exatamente como o vídeo é "
+            "gravado, cortado e guardado, sem precisar acreditar na nossa "
+            "palavra."
+        ),
+        "about_cta_h": "Quer ver no seu tatame?",
+        "about_cta_p": (
+            "A visita pra avaliar a academia e montar o orçamento é "
+            "gratuita. Chama no WhatsApp e a gente marca."
+        ),
         "signup_title": "Comece sua academia",
         "label_gym_name": "Nome da academia",
         "label_your_name": "Seu nome",
@@ -297,6 +370,79 @@ TRANSLATIONS = {
         "wa_open": "Open WhatsApp chat",
         "wa_close": "Close",
         "footer_contact": "contact",
+        "nav_about": "About",
+        "nav_privacy": "Privacy",
+        "nav_terms": "Terms",
+        "meta_desc": (
+            "A button beside the mat saves the last 10 minutes of training. "
+            "Camera, button and recorder installed at your gym, with a cloud "
+            "clip library. From R$150/month."
+        ),
+        "og_image_alt": "A jiu-jitsu mat seen through the NO FLAGRA camera",
+        "eyebrow_showcase": "See it in action",
+        "showcase_badge": "recording",
+        "showcase_video_alt": (
+            "Jiu-jitsu training on the mat, recorded by the fixed NO FLAGRA camera"
+        ),
+        "showcase_caption": (
+            "Real footage from an installed NO FLAGRA camera. This is the "
+            "frame that keeps rolling all the time — the button just cuts "
+            "the last 10 minutes out of it."
+        ),
+        "button_photo_alt": "The NO FLAGRA button installed at the edge of the mat",
+        "legal_updated": "Last updated",
+        "legal_back": "Back to the home page",
+        "meta_desc_about": (
+            "The people behind NO FLAGRA, and why a button beside the mat "
+            "beats having someone film your training."
+        ),
+        "about_title": "About",
+        "about_h1": "Built by people tired of missing the finish.",
+        "about_lead": (
+            "NO FLAGRA came out of an annoying and very specific problem: the "
+            "best thing that happens in training is almost never being "
+            "filmed."
+        ),
+        "about_s1_h": "The problem",
+        "about_s1_p": (
+            "Anyone who trains knows the scene. A perfect pass, a sweep "
+            "nobody saw coming, a submission you'd been chasing for six "
+            "months — and no one was recording. By the time someone "
+            "remembers their phone, the moment is gone. Asking someone to "
+            "sit out and hold a phone does solve the filming, but it takes a "
+            "person off the mat."
+        ),
+        "about_s2_h": "The idea",
+        "about_s2_p": (
+            "We flipped the order. Instead of starting to record when "
+            "something happens, the camera records the mat continuously, on "
+            "a recorder that lives inside the gym. The button doesn't start "
+            "any camera: it cuts the last 10 minutes out of what was already "
+            "recorded. The button is a pair of scissors, not a camera — "
+            "which is why it still works when you only remember to press it "
+            "after the round ended."
+        ),
+        "about_s3_h": "How we work",
+        "about_s3_p": (
+            "We come to the gym, install it, position the camera to cover "
+            "the whole mat, test it with your team and leave it running. You "
+            "don't build anything and you don't configure anything. If "
+            "something breaks you message us on WhatsApp, and the person who "
+            "answers is the person who built the system — there's no call "
+            "centre in between."
+        ),
+        "about_s4_h": "Where we are",
+        "about_s4_p": (
+            "The system runs today in a real gym, in daily use, and is being "
+            "opened up to new locations. The project's code is public on "
+            "GitHub — you can see exactly how video is recorded, cut and "
+            "stored, without having to take our word for it."
+        ),
+        "about_cta_h": "Want one on your mat?",
+        "about_cta_p": (
+            "The visit to assess your gym and put a quote together is free. "
+            "Message us on WhatsApp and we'll set it up."
+        ),
         "signup_title": "Start your gym",
         "label_gym_name": "Gym name",
         "label_your_name": "Your name",

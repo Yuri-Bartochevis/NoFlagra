@@ -68,7 +68,10 @@ pip install -r requirements.txt pytest
 pytest -v
 ```
 
-Expect `22 passed` — landing page (PT default + EN toggle), health check,
+Expect `45 passed` — landing page (PT default + EN toggle), the `<html lang>`
+attribute, description/canonical/`og:` social cards, the showcase video, the
+about/privacy/terms pages and their English redirects, `robots.txt` and
+`sitemap.xml`, health check,
 signup (including the admin membership it creates, duplicate-email/
 short-password rejection), login/logout, dashboard gating, tenant isolation,
 and the invite flow: creating/revoking invites, admin-only enforcement,

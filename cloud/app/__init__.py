@@ -8,6 +8,9 @@ from .i18n import LOCALES, get_locale, t
 
 DEV_SECRET_KEY = "dev-insecure-change-me"
 
+# Locale code -> the BCP 47 tag that goes in <html lang> and og:locale.
+HTML_LANG = {"pt": "pt-BR", "en": "en"}
+
 
 def _database_url():
     url = os.environ.get("DATABASE_URL", "postgresql://noflagra:noflagra@localhost:5432/noflagra")
@@ -31,17 +34,42 @@ def create_app():
         app.logger.warning("FLASK_SECRET_KEY is unset — using the insecure dev default.")
     # Digits only, with country + area code — wa.me rejects punctuation.
     app.config["WHATSAPP_NUMBER"] = os.environ.get("WHATSAPP_NUMBER", "5511989449987")
+    # Absolute origin, no trailing slash. og:image and canonical have to be
+    # absolute URLs — a relative one is silently dropped by WhatsApp and
+    # every other scraper. The landing page is served from two places (this
+    # app and the frozen GitHub Pages copy), so both point canonical at the
+    # same origin rather than competing for the same keywords.
+    app.config["SITE_URL"] = os.environ.get("SITE_URL", "https://noflagra.onrender.com").rstrip("/")
+    # Shown in the footer once the company is registered; hidden while empty
+    # rather than rendering a placeholder that looks like a real number.
+    app.config["COMPANY_CNPJ"] = os.environ.get("COMPANY_CNPJ", "")
 
     db.init_app(app)
     migrate.init_app(app, db)
 
     @app.context_processor
     def inject_i18n():
+        locale = get_locale()
         return {
             "t": t,
-            "locale": get_locale(),
+            "locale": locale,
+            # BCP 47 for the <html lang> attribute — "pt" alone is understood
+            # but "pt-BR" is what screen readers need to pick the right voice.
+            "html_lang": HTML_LANG[locale],
             "whatsapp_number": app.config["WHATSAPP_NUMBER"],
+            "site_url": app.config["SITE_URL"],
+            "company_cnpj": app.config["COMPANY_CNPJ"],
         }
+
+    @app.template_global()
+    def static_exists(filename):
+        """True when app/static/<filename> is actually on disk.
+
+        Lets a template hold a slot for an asset that hasn't been shot yet
+        (the button photo) without rendering a broken image in the meantime —
+        drop the file in and the section appears on its own.
+        """
+        return os.path.isfile(os.path.join(app.static_folder, filename))
 
     @app.after_request
     def remember_locale(response):

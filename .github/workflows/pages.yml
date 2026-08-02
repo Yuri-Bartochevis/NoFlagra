@@ -13,7 +13,10 @@ on:
     branches: [main]
     paths:
       - "cloud/app/templates/**"
+      - "cloud/app/static/**"
+      - "cloud/app/blueprints/public.py"
       - "cloud/app/i18n.py"
+      - "cloud/app/legal.py"
       - "cloud/app/__init__.py"
       - "cloud/freeze.py"
       - "cloud/requirements.txt"
@@ -47,13 +50,32 @@ jobs:
 
       - run: pip install -r requirements.txt
 
+      # og:image has to be an absolute URL a scraper can actually fetch, so
+      # it points at Pages rather than the app — previews then keep working
+      # even when a free-tier web service is asleep. The owner is lowercased
+      # because github.repository_owner keeps its original casing while the
+      # Pages hostname is always lower case.
+      - name: Work out the site origin
+        run: |
+          if [ -n "${{ vars.SITE_URL }}" ]; then
+            echo "SITE_URL=${{ vars.SITE_URL }}" >> "$GITHUB_ENV"
+          else
+            owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+            echo "SITE_URL=https://$owner.github.io/${{ github.event.repository.name }}" >> "$GITHUB_ENV"
+          fi
+
       - name: Freeze the landing page
         env:
           APP_BASE_URL: ${{ vars.APP_BASE_URL }}
         run: python3 freeze.py
 
       - name: Fail if the build came out empty
-        run: test -s dist/index.html && test -s dist/en/index.html
+        run: |
+          for page in index en/index sobre/index privacidade/index termos/index; do
+            test -s "dist/$page.html" || { echo "missing dist/$page.html"; exit 1; }
+          done
+          test -s dist/static/mat-demo.mp4
+          test -s dist/static/og.jpg
 
       - uses: actions/upload-pages-artifact@v3
         with:

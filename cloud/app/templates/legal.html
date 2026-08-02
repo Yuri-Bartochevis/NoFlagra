@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}{{ page.title }} — NO FLAGRA{% endblock %}
+{% block meta_description %}{{ page.lead|striptags|truncate(155) }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .legal { max-width: 760px; margin: 0 auto; padding: 56px 24px 40px; }
+  .legal h1 {
+    font-family: var(--display); font-weight: 400; font-size: clamp(34px, 6vw, 52px);
+    text-transform: uppercase; letter-spacing: .02em; line-height: 1.02; margin: 0 0 12px;
+  }
+  .legal .updated {
+    color: var(--dim); font-size: 13px; letter-spacing: .04em;
+    text-transform: uppercase; font-family: var(--display); margin: 0 0 28px;
+  }
+  .legal .lead { font-size: 18px; line-height: 1.65; color: var(--paper); margin: 0 0 12px; }
+  .legal .draft {
+    background: var(--panel); border: 1px solid var(--edge); border-left: 3px solid var(--yellow);
+    border-radius: 8px; padding: 14px 18px; margin: 26px 0 40px;
+    font-size: 14px; line-height: 1.6; color: var(--dim);
+  }
+  .legal h2 {
+    font-family: var(--display); font-weight: 400; font-size: 22px;
+    text-transform: uppercase; letter-spacing: .03em; color: var(--yellow);
+    margin: 38px 0 12px; padding-top: 22px; border-top: 1px solid var(--edge);
+  }
+  .legal p { font-size: 15.5px; line-height: 1.72; color: var(--dim); margin: 0 0 14px; }
+  .legal p b { color: var(--paper); font-weight: 600; }
+  .legal a { color: var(--yellow); }
+  .legal code {
+    background: var(--panel-deep); border: 1px solid var(--edge); border-radius: 4px;
+    padding: 1px 5px; font-size: 13.5px; color: var(--paper);
+  }
+  .legal .back { display: inline-block; margin-top: 44px; color: var(--dim); font-size: 14px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<article class="legal">
+  <h1>{{ page.title }}</h1>
+  <p class="updated">{{ t('legal_updated') }} {{ page.updated }}</p>
+
+  <p class="lead">{{ page.lead }}</p>
+  <p class="draft">{{ draft_notice }}</p>
+
+  {% for heading, paragraphs in page.sections %}
+    <h2>{{ heading }}</h2>
+    {# Copy is authored in legal.py by us, never user input — the markup in it
+       (<b>, <a>, <code>) is intentional, so it renders rather than escapes. #}
+    {% for para in paragraphs %}<p>{{ para|safe }}</p>{% endfor %}
+  {% endfor %}
+
+  <a class="back" href="{{ url_for('public.index') }}">&larr; {{ t('legal_back') }}</a>
+</article>
+{% endblock %}

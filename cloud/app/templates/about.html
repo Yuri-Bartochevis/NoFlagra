@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}{{ t('about_title') }} — NO FLAGRA{% endblock %}
+{% block meta_description %}{{ t('meta_desc_about') }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .about { max-width: 760px; margin: 0 auto; padding: 56px 24px 20px; }
+  .about h1 {
+    font-family: var(--display); font-weight: 400; font-size: clamp(34px, 6.4vw, 56px);
+    text-transform: uppercase; letter-spacing: .02em; line-height: 1.02; margin: 0 0 20px;
+  }
+  .about h1 em { font-style: normal; color: var(--yellow); }
+  .about .lead { font-size: 19px; line-height: 1.62; color: var(--paper); margin: 0 0 8px; }
+
+  .about-media {
+    margin: 40px 0 8px; border: 1px solid var(--edge); border-radius: 14px;
+    overflow: hidden; background: var(--panel-deep);
+  }
+  .about-media img { display: block; width: 100%; height: auto; }
+  .about-media figcaption {
+    padding: 12px 16px; font-size: 13px; color: var(--dim);
+    border-top: 1px solid var(--edge);
+  }
+
+  .about h2 {
+    font-family: var(--display); font-weight: 400; font-size: 24px;
+    text-transform: uppercase; letter-spacing: .03em; color: var(--yellow);
+    margin: 40px 0 12px; padding-top: 24px; border-top: 1px solid var(--edge);
+  }
+  .about p { font-size: 16.5px; line-height: 1.72; color: var(--dim); margin: 0 0 14px; }
+
+  .about-cta {
+    background: var(--panel); border: 1px solid var(--edge); border-left: 4px solid var(--yellow);
+    border-radius: 12px; padding: 28px 32px; margin: 48px 0 24px;
+  }
+  .about-cta h3 {
+    font-family: var(--display); font-weight: 400; text-transform: uppercase;
+    letter-spacing: .03em; font-size: 24px; margin: 0 0 8px; color: var(--paper);
+  }
+  .about-cta p { margin: 0 0 20px; }
+  .about-cta .row { display: flex; gap: 12px; flex-wrap: wrap; }
+</style>
+{% endblock %}
+
+{% block content %}
+<article class="about">
+  <h1>{{ t('about_h1') }}</h1>
+  <p class="lead">{{ t('about_lead') }}</p>
+
+  {# The mat shot doubles as proof the product is real, not a render. #}
+  <figure class="about-media">
+    <img src="{{ url_for('static', filename='mat-poster.jpg') }}"
+         alt="{{ t('showcase_video_alt') }}" loading="lazy">
+    <figcaption>{{ t('showcase_caption') }}</figcaption>
+  </figure>
+
+  <h2>{{ t('about_s1_h') }}</h2>
+  <p>{{ t('about_s1_p') }}</p>
+
+  <h2>{{ t('about_s2_h') }}</h2>
+  <p>{{ t('about_s2_p') }}</p>
+
+  <h2>{{ t('about_s3_h') }}</h2>
+  <p>{{ t('about_s3_p') }}</p>
+
+  <h2>{{ t('about_s4_h') }}</h2>
+  <p>{{ t('about_s4_p') }}</p>
+
+  {# TODO (yuri): the page deliberately says nothing about who "we" are —
+     no name, no photo, no city — because that isn't mine to invent. Add a
+     short paragraph here with your name, where you're based and how long
+     you've trained; on a page whose whole job is trust, a real person
+     beats another paragraph about the product. #}
+
+  <div class="about-cta">
+    <h3>{{ t('about_cta_h') }}</h3>
+    <p>{{ t('about_cta_p') }}</p>
+    <div class="row">
+      <a class="btn btn-primary" target="_blank" rel="noopener"
+         href="https://wa.me/{{ whatsapp_number }}?text={{ t('wa_msg')|urlencode }}">
+        {{ t('contact_whatsapp') }}
+      </a>
+      <a class="btn btn-ghost" href="{{ url_for('public.index') }}#preco">{{ t('nav_pricing') }}</a>
+    </div>
+  </div>
+</article>
+{% endblock %}

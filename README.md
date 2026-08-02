@@ -232,6 +232,12 @@ tiers, multi-camera-per-gym, a mobile app, per-gym subdomains.
 - [ ] Deep sleep for battery life
 - [ ] Moved to the Raspberry Pi
 - [x] Public marketing site live at `/` — hero, how-it-works, benefits, showcase, CTA (Phase 5, pulled forward)
+- [x] Showcase runs real mat footage (`app/static/mat-demo.mp4`), not a mockup
+- [x] `/sobre`, `/privacidade` (LGPD) and `/termos`, both locales, with English aliases redirecting to the canonical Portuguese paths
+- [x] Social cards (`og:`/Twitter), meta description, canonical, favicons, `robots.txt`, `sitemap.xml` with `hreflang`
+- [ ] Legal review of the privacy policy and terms — both ship with a visible "under review" notice
+- [ ] Analytics: no way to measure landing-page → WhatsApp conversion yet
+- [ ] Button photo (`app/static/button.jpg`) and a founder paragraph on `/sobre`
 - [x] Signup/login/logout, `Establishment` + admin `Membership`, `/app` gated and tenant-scoped (Phase 1)
 - [x] Admin invite flow — invite by email/role, accept/revoke/expire, existing-account password check (Phase 1)
 - [x] Selling funnel (landing/signup/login) defaults to PT-BR, EN as a toggle

@@ -1,10 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ html_lang }}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0A0A0A">
 <title>{% block title %}NO FLAGRA{% endblock %}</title>
+
+{# The funnel's primary CTA is WhatsApp, so the expected path is someone
+   forwarding this link to a training partner. Without the block below that
+   arrives as a bare URL with no title, image or description. #}
+<meta name="description" content="{% block meta_description %}{{ t('meta_desc') }}{% endblock %}">
+<link rel="canonical" href="{{ site_url }}{% block canonical_path %}{{ request.path }}{% endblock %}">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="NO FLAGRA">
+<meta property="og:locale" content="{{ html_lang|replace('-', '_') }}">
+<meta property="og:title" content="{% block og_title %}{{ self.title() }}{% endblock %}">
+<meta property="og:description" content="{{ self.meta_description() }}">
+<meta property="og:url" content="{{ site_url }}{{ request.path }}">
+<meta property="og:image" content="{{ site_url }}{{ url_for('static', filename='og-en.jpg' if locale == 'en' else 'og.jpg') }}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="{{ t('og_image_alt') }}">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+<link rel="icon" href="{{ url_for('static', filename='favicon-32.png') }}" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -111,6 +134,9 @@
     border-top: 1px solid var(--edge); color: var(--dim); font-size: 13px;
     display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;
   }
+  footer.site .muted { color: var(--edge-hi); }
+  .footer-links a { color: var(--dim); text-decoration: none; }
+  .footer-links a:hover { color: var(--yellow); }
 
   /* ---- floating WhatsApp ------------------------------------------ */
   .wa { position: fixed; right: 20px; bottom: 20px; z-index: 60; }
@@ -175,6 +201,7 @@
         <button class="btn btn-ghost" type="submit" style="padding:8px 16px;font-size:13px;">{{ t('nav_logout') }}</button>
       </form>
     {% else %}
+      <a href="{{ url_for('public.about') }}" class="nav-hide-sm">{{ t('nav_about') }}</a>
       <a href="{{ url_for('public.index') }}#preco" class="nav-hide-sm">{{ t('nav_pricing') }}</a>
       <a href="{{ url_for('auth.login') }}">{{ t('nav_login') }}</a>
       <a class="btn btn-primary" style="padding:8px 18px;font-size:13px;"
@@ -196,8 +223,20 @@
 {% block content %}{% endblock %}
 
 <footer class="site">
-  <span>&copy; NO FLAGRA</span>
-  <span><a href="mailto:hello@noflagra.app">{{ t('footer_contact') }}</a> &middot; <a href="https://github.com/Yuri-Bartochevis/NoFlagra">github</a></span>
+  <span>
+    &copy; NO FLAGRA
+    {# A gym's finance team needs a CNPJ to raise a purchase order, and its
+       absence reads as "hobby project" to anyone evaluating a supplier.
+       Set COMPANY_CNPJ once the entity is registered. #}
+    {% if company_cnpj %}<br><span class="muted">CNPJ {{ company_cnpj }}</span>{% endif %}
+  </span>
+  <span class="footer-links">
+    <a href="{{ url_for('public.about') }}">{{ t('nav_about') }}</a> &middot;
+    <a href="{{ url_for('public.privacy') }}">{{ t('nav_privacy') }}</a> &middot;
+    <a href="{{ url_for('public.terms') }}">{{ t('nav_terms') }}</a> &middot;
+    <a href="mailto:hello@noflagra.app">{{ t('footer_contact') }}</a> &middot;
+    <a href="https://github.com/Yuri-Bartochevis/NoFlagra">github</a>
+  </span>
 </footer>
 
 {% if not current_user.is_authenticated %}
