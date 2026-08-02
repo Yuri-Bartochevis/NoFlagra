@@ -115,8 +115,14 @@ relay that isn't needed to sell the clip library.
 | `Establishment` | the tenant — one per gym |
 | `Membership` | user ⇄ establishment, with a role (`admin` / `member`) |
 | `Invite` | pending email invites into an establishment |
-| `Device` | a paired Raspberry Pi — establishment, camera name, hashed device key |
-| `Clip` | establishment, device, S3 key, timestamps, size, status — replaces today's `os.listdir()` directory scan |
+| `Device` | a paired Raspberry Pi — UUID, establishment (one device per account, for now), hashed device key |
+| `Camera` | one row per camera a device drives — a device can have several |
+| `Clip` | camera, establishment, S3 key, timestamps, size, status — replaces today's `os.listdir()` directory scan |
+
+`Establishment → Device → Camera → Clip` is one gym's account owning one Pi
+driving several cameras, each producing its own clips. Full design —
+pairing (script-based, no UI yet), the device-facing API, and the S3 key
+layout — is in [`docs/infrastructure.md`](docs/infrastructure.md).
 
 ### Landing page sketch (`/`, public, no login)
 
@@ -169,8 +175,9 @@ relay that isn't needed to sell the clip library.
                           viewed off the gym's network)
                         - clip library, from Postgres +
                           presigned S3 URLs
-/app/devices           admin: generate a pairing code,       — Phase 2
-                        see each Pi's status
+(pairing is a script,        an admin runs a CLI script to      — Phase 2
+ not a route yet)             pair a device — see
+                               docs/infrastructure.md
 /app/team               admin: invite/manage members          — done
 ```
 
@@ -187,9 +194,12 @@ running throughout.
    gym" signup, and the admin invite flow are all live. Still open: actually
    migrating the real gym's account through this flow, and emailing invite
    links instead of the admin copying them from a flash message.
-2. **Device pairing + clip metadata** — pairing codes, edge app posts clip
-   metadata to the cloud after each export; playback still points at the
-   Pi's LAN address.
+2. **Device pairing + clip metadata** — pairing is a pair of CLI scripts
+   (admin-side and Pi-side) talking to a device-facing API, not a dashboard
+   page; one device (UUID-identified) per account, many cameras per device.
+   The edge app posts clip metadata to the cloud after each export; playback
+   still points at the Pi's LAN address. Full design in
+   [`docs/infrastructure.md`](docs/infrastructure.md).
 3. **S3 upload pipeline** — presigned PUT/GET URLs, a durable upload-retry
    queue on the Pi (survives a reboot mid-upload).
 4. **Ship the branded post-login app** — the dashboard moves to `/app`,
