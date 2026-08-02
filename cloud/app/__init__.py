@@ -61,10 +61,12 @@ def create_app():
 
     from .blueprints.auth import auth_bp
     from .blueprints.dashboard import dashboard_bp
+    from .blueprints.device_api import device_api_bp
     from .blueprints.public import public_bp
 
     app.register_blueprint(public_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
+    app.register_blueprint(device_api_bp)
 
     return app

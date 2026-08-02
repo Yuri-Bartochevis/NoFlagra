@@ -313,3 +313,241 @@ def test_expired_invite_cannot_be_accepted(app, client):
     client.post("/logout")
     resp = client.get(f"/invite/{token}")
     assert resp.status_code == 404
+
+
+# ---- device API (Phase 2) ----
+
+
+def issue_pairing_code(app, gym_name=None):
+    """Mint a pairing code the way scripts/create_pairing_code.py does."""
+    from app.models import (
+        PAIRING_CODE_LIFETIME,
+        Device,
+        generate_pairing_code,
+        hash_pairing_code,
+    )
+
+    with app.app_context():
+        establishment = (
+            Establishment.query.filter_by(name=gym_name).first()
+            if gym_name
+            else Establishment.query.first()
+        )
+        device = Device(establishment_id=establishment.id, name="Gym Pi")
+        code = generate_pairing_code()
+        device.pairing_code_hash = hash_pairing_code(code)
+        device.pairing_code_expires_at = datetime.now(timezone.utc) + PAIRING_CODE_LIFETIME
+        device.pairing_status = "pending"
+        _db.session.add(device)
+        _db.session.commit()
+        return code
+
+
+def pair(client, code, cameras=("mat_camera",)):
+    return client.post(
+        "/api/devices/pair",
+        json={"code": code, "camera_names": list(cameras)},
+    )
+
+
+def auth_header(uuid, key):
+    return {"Authorization": f"Device {uuid}:{key}"}
+
+
+def clip_payload(**overrides):
+    body = {
+        "camera_name": "mat_camera",
+        "pressed_at": "2026-08-02T19:42:00Z",
+        "start_ts": "2026-08-02T19:32:00Z",
+        "end_ts": "2026-08-02T19:42:15Z",
+        "duration_seconds": 615,
+        "size_bytes": 184320000,
+        "local_filename": "mat_2026-08-02_19-42-00.mp4",
+    }
+    body.update(overrides)
+    return body
+
+
+def test_device_pairs_and_gets_a_key_and_cameras(client, app):
+    signup(client)
+    code = issue_pairing_code(app)
+
+    resp = pair(client, code, cameras=("mat_camera", "cage camera"))
+    assert resp.status_code == 201
+    body = resp.get_json()
+    assert body["device_key"]
+    assert body["establishment"] == "Yuri's BJJ"
+    assert [c["name"] for c in body["cameras"]] == ["mat_camera", "cage camera"]
+    # slug is what ends up in the S3 path, so it must be url-safe
+    assert [c["slug"] for c in body["cameras"]] == ["mat-camera", "cage-camera"]
+
+    from app.models import Device, hash_device_key
+
+    with app.app_context():
+        device = Device.query.filter_by(uuid=body["device_uuid"]).one()
+        assert device.pairing_status == "paired"
+        # the key is stored hashed, never in the clear
+        assert device.device_key_hash == hash_device_key(body["device_key"])
+        assert device.device_key_hash != body["device_key"]
+        # the code is single use — burned on success
+        assert device.pairing_code_hash is None
+
+
+def test_pairing_code_cannot_be_reused(client, app):
+    signup(client)
+    code = issue_pairing_code(app)
+    assert pair(client, code).status_code == 201
+    assert pair(client, code).status_code == 401
+
+
+def test_pairing_rejects_a_wrong_code(client, app):
+    signup(client)
+    issue_pairing_code(app)
+    assert pair(client, "NOTAREALCODE").status_code == 401
+
+
+def test_pairing_rejects_an_expired_code(client, app):
+    signup(client)
+    from app.models import Device, generate_pairing_code, hash_pairing_code
+
+    code = generate_pairing_code()
+    with app.app_context():
+        establishment = Establishment.query.first()
+        _db.session.add(
+            Device(
+                establishment_id=establishment.id,
+                name="Gym Pi",
+                pairing_status="pending",
+                pairing_code_hash=hash_pairing_code(code),
+                pairing_code_expires_at=datetime.now(timezone.utc) - timedelta(minutes=1),
+            )
+        )
+        _db.session.commit()
+
+    assert pair(client, code).status_code == 401
+
+
+def test_pairing_rejects_duplicate_camera_names(client, app):
+    signup(client)
+    code = issue_pairing_code(app)
+    # differ only by case/spacing, but collapse to the same slug
+    resp = pair(client, code, cameras=("mat camera", "Mat_Camera"))
+    assert resp.status_code == 400
+
+
+def test_pairing_requires_at_least_one_camera(client, app):
+    signup(client)
+    code = issue_pairing_code(app)
+    assert client.post("/api/devices/pair", json={"code": code, "camera_names": []}).status_code == 400
+
+
+def test_clip_is_recorded_against_the_right_camera_and_tenant(client, app):
+    signup(client)
+    paired = pair(client, issue_pairing_code(app)).get_json()
+
+    resp = client.post(
+        "/api/clips",
+        json=clip_payload(),
+        headers=auth_header(paired["device_uuid"], paired["device_key"]),
+    )
+    assert resp.status_code == 201
+    assert resp.get_json()["status"] == "pending"
+
+    from app.models import Clip, Device
+
+    with app.app_context():
+        clip = Clip.query.one()
+        device = Device.query.one()
+        establishment = Establishment.query.one()
+        assert clip.establishment_id == establishment.id
+        assert clip.camera_id == paired["cameras"][0]["id"]
+        assert clip.duration_seconds == 615
+        assert clip.local_filename == "mat_2026-08-02_19-42-00.mp4"
+        # Phase 2 records metadata only; the upload is Phase 3
+        assert clip.s3_key is None
+        # posting a clip is also the device's heartbeat
+        assert device.last_seen_at is not None
+
+
+def test_clip_requires_a_valid_device_key(client, app):
+    signup(client)
+    paired = pair(client, issue_pairing_code(app)).get_json()
+
+    for headers in (
+        {},
+        {"Authorization": "Bearer somekey"},
+        auth_header(paired["device_uuid"], "wrong-key"),
+        auth_header("00000000-0000-0000-0000-000000000000", paired["device_key"]),
+    ):
+        resp = client.post("/api/clips", json=clip_payload(), headers=headers)
+        assert resp.status_code == 401, headers
+
+    from app.models import Clip
+
+    with app.app_context():
+        assert Clip.query.count() == 0
+
+
+def test_device_cannot_post_a_clip_for_another_gyms_camera(client, app):
+    signup(client)
+    gym_a = pair(client, issue_pairing_code(app)).get_json()
+
+    client.post("/logout")
+    signup(client, email="b@example.com", gym_name="Gym B", name="B")
+    gym_b = pair(client, issue_pairing_code(app, gym_name="Gym B")).get_json()
+
+    # Mixing one gym's UUID with the other's key must not authenticate.
+    resp = client.post(
+        "/api/clips",
+        json=clip_payload(camera_name="mat_camera"),
+        headers=auth_header(gym_a["device_uuid"], gym_b["device_key"]),
+    )
+    assert resp.status_code == 401
+
+    # And a valid Gym B device may only write clips for Gym B.
+    ok = client.post(
+        "/api/clips",
+        json=clip_payload(),
+        headers=auth_header(gym_b["device_uuid"], gym_b["device_key"]),
+    )
+    assert ok.status_code == 201
+
+    from app.models import Clip, Establishment as E
+
+    with app.app_context():
+        gym_b_row = E.query.filter_by(name="Gym B").one()
+        clip = Clip.query.one()
+        assert clip.establishment_id == gym_b_row.id
+
+
+def test_clip_rejects_an_unknown_camera(client, app):
+    signup(client)
+    paired = pair(client, issue_pairing_code(app)).get_json()
+    resp = client.post(
+        "/api/clips",
+        json=clip_payload(camera_name="no_such_camera"),
+        headers=auth_header(paired["device_uuid"], paired["device_key"]),
+    )
+    assert resp.status_code == 404
+
+
+def test_clip_validates_its_payload(client, app):
+    signup(client)
+    paired = pair(client, issue_pairing_code(app)).get_json()
+    headers = auth_header(paired["device_uuid"], paired["device_key"])
+
+    bad = [
+        clip_payload(pressed_at="not-a-timestamp"),
+        clip_payload(end_ts="2026-08-02T19:00:00Z"),  # before start_ts
+        clip_payload(duration_seconds=-1),
+        clip_payload(size_bytes="big"),
+        clip_payload(camera_name=""),
+    ]
+    for payload in bad:
+        resp = client.post("/api/clips", json=payload, headers=headers)
+        assert resp.status_code == 400, payload
+
+    from app.models import Clip
+
+    with app.app_context():
+        assert Clip.query.count() == 0
