@@ -13,13 +13,19 @@ def create_app():
     )
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", "dev-insecure-change-me")
+    # Digits only, with country + area code — wa.me rejects punctuation.
+    app.config["WHATSAPP_NUMBER"] = os.environ.get("WHATSAPP_NUMBER", "5511989449987")
 
     db.init_app(app)
     migrate.init_app(app, db)
 
     @app.context_processor
     def inject_i18n():
-        return {"t": t, "locale": get_locale()}
+        return {
+            "t": t,
+            "locale": get_locale(),
+            "whatsapp_number": app.config["WHATSAPP_NUMBER"],
+        }
 
     @app.after_request
     def remember_locale(response):
