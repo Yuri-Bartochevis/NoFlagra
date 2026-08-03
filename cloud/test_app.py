@@ -104,6 +104,16 @@ def test_social_card_is_absolute_and_locale_specific(client):
     assert 'name="twitter:card" content="summary_large_image"' in pt
 
 
+def test_copy_presents_the_clip_length_as_a_default_not_a_fixed_number(client):
+    # The window is LOOKBACK_SECONDS on the receiver, set per gym at install.
+    # Copy may quote 10 minutes as the default, but must say somewhere that
+    # it can be changed — otherwise the site promises a fixed product.
+    pt = client.get("/").data.decode("utf-8")
+    en = client.get("/?lang=en").data.decode("utf-8")
+    assert "padrão" in pt and "ajusta" in pt
+    assert "default" in en and "install" in en
+
+
 def test_showcase_uses_the_real_mat_footage(client):
     body = client.get("/").data.decode("utf-8")
     assert "mat-demo.mp4" in body

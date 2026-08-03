@@ -79,8 +79,9 @@ PRIVACY = {
                     "<b>Vídeo:</b> a câmera grava o tatame de forma contínua, "
                     "em um gravador que fica dentro da própria academia. Essa "
                     "gravação contínua <b>não sai da academia</b>. Só sobe para "
-                    "a nuvem o trecho de 10 minutos que alguém salvou "
-                    "apertando o botão.",
+                    "a nuvem o trecho que alguém salvou apertando o botão — "
+                    "10 minutos por padrão, ajustável na instalação da sua "
+                    "academia.",
                     "<b>Metadados do clipe:</b> data, hora, duração, tamanho do "
                     "arquivo, e a qual câmera e academia ele pertence.",
                     "<b>Dados técnicos:</b> registros de acesso ao painel "
@@ -214,8 +215,9 @@ PRIVACY = {
                     "member).",
                     "<b>Video:</b> the camera records the mat continuously, on "
                     "a recorder that sits inside the gym. That continuous "
-                    "recording <b>never leaves the gym</b>. Only the 10-minute "
-                    "stretch someone saved by pressing the button is uploaded.",
+                    "recording <b>never leaves the gym</b>. Only the stretch "
+                    "someone saved by pressing the button is uploaded — 10 "
+                    "minutes by default, adjustable when your gym is set up.",
                     "<b>Clip metadata:</b> date, time, duration, file size, "
                     "and which camera and gym it belongs to.",
                     "<b>Technical data:</b> dashboard access logs (date, time "

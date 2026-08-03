@@ -129,6 +129,14 @@ TRANSLATIONS = {
             "Não. Sua equipe entra pelo navegador do celular, com o login da "
             "academia. Funciona em qualquer celular."
         ),
+        "faq7_q": "Dá pra mudar o tempo do clipe?",
+        "faq7_a": (
+            "Dá. Dez minutos é o padrão, porque cobre um round inteiro com "
+            "folga. Na instalação a gente ajusta pro que fizer sentido na sua "
+            "academia — menos pra treino de queda, mais pra rolinho longo. "
+            "Clipe mais longo só ocupa mais espaço e demora um pouco mais pra "
+            "subir."
+        ),
         "contact_h": "Vamos colocar um no seu tatame?",
         "contact_p": (
             "Conta quantos tatames você tem e a gente monta um orçamento. "
@@ -159,7 +167,7 @@ TRANSLATIONS = {
         "showcase_caption": (
             "Filmagem real de uma câmera NO FLAGRA instalada. É esse "
             "enquadramento que fica gravando o tempo todo — o botão só "
-            "recorta os últimos 10 minutos dele."
+            "recorta os últimos minutos dele, 10 por padrão."
         ),
         "button_photo_alt": "O botão NO FLAGRA instalado na beira do tatame",
         "legal_updated": "Atualizado em",
@@ -189,8 +197,9 @@ TRANSLATIONS = {
             "A gente inverteu a ordem. Em vez de começar a gravar quando "
             "algo acontece, a câmera grava o tatame o tempo todo, num "
             "gravador que fica dentro da academia. O botão não liga câmera "
-            "nenhuma: ele recorta os últimos 10 minutos do que já estava "
-            "gravado. O botão é uma tesoura, não uma câmera — por isso "
+            "nenhuma: ele recorta os últimos minutos do que já estava "
+            "gravado — 10 por padrão, ajustável na instalação. O botão é uma "
+            "tesoura, não uma câmera — por isso "
             "funciona mesmo se você lembrar de apertar só depois que acabou."
         ),
         "about_s3_h": "Como a gente trabalha",
@@ -357,6 +366,14 @@ TRANSLATIONS = {
             "No. Your team signs in from their phone's browser with the gym's "
             "login. It works on any phone."
         ),
+        "faq7_q": "Can the clip length be changed?",
+        "faq7_a": (
+            "Yes. Ten minutes is the default, because it comfortably covers a "
+            "full round. We set it at install to whatever suits your gym — "
+            "shorter for takedown drilling, longer for extended rolls. A "
+            "longer clip simply takes more storage and a little longer to "
+            "upload."
+        ),
         "contact_h": "Let's put one on your mat.",
         "contact_p": (
             "Tell us how many mats you have and we'll put a quote together. "
@@ -386,8 +403,8 @@ TRANSLATIONS = {
         ),
         "showcase_caption": (
             "Real footage from an installed NO FLAGRA camera. This is the "
-            "frame that keeps rolling all the time — the button just cuts "
-            "the last 10 minutes out of it."
+            "frame that keeps rolling all the time — the button just cuts the "
+            "last few minutes out of it, 10 by default."
         ),
         "button_photo_alt": "The NO FLAGRA button installed at the edge of the mat",
         "legal_updated": "Last updated",
@@ -417,8 +434,9 @@ TRANSLATIONS = {
             "We flipped the order. Instead of starting to record when "
             "something happens, the camera records the mat continuously, on "
             "a recorder that lives inside the gym. The button doesn't start "
-            "any camera: it cuts the last 10 minutes out of what was already "
-            "recorded. The button is a pair of scissors, not a camera — "
+            "any camera: it cuts the last few minutes out of what was already "
+            "recorded — 10 by default, adjustable at install. The button is a "
+            "pair of scissors, not a camera — "
             "which is why it still works when you only remember to press it "
             "after the round ended."
         ),

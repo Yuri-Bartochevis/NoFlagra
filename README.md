@@ -3,7 +3,8 @@
 *(formerly "Gym Instant Replay" — same project, now aimed at more than one gym)*
 
 A physical button beside a jiu-jitsu mat that saves the **last 10 minutes** of
-footage as a video clip.
+footage as a video clip. Ten minutes is the default (`LOOKBACK_SECONDS`, set
+per gym at install) — everything below uses it as the working example.
 
 Today that's the whole system: one gym, one Raspberry-Pi-to-be, one shared
 secret, clips on local disk (its full setup docs now live in
@@ -40,8 +41,8 @@ button is a pair of scissors, not a camera.
 
 Two consequences worth remembering:
 
-- Frigate must have been running for at least 10 minutes before a press can
-  produce a full clip. No tape, nothing to cut.
+- Frigate must have been running for at least the lookback window before a
+  press can produce a full clip. No tape, nothing to cut.
 - A few seconds of delay anywhere in the chain costs you nothing, because the
   clip is retroactive. This matters later for battery life.
 
