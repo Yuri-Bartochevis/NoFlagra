@@ -45,7 +45,10 @@ TRANSLATIONS = {
         "cta_band_link": "Fala com a gente",
         "nav_pricing": "Preço",
         "nav_get_quote": "Peça um orçamento",
-        "hero_note": "Instalação completa na sua academia. Sem cameraman, sem app pra baixar.",
+        "hero_note": (
+            "Instalação completa na sua academia. Sem cameraman, sem app pra "
+            "baixar. E dá pra testar 30 dias sem custo."
+        ),
         "hero_cta_secondary": "Ver como funciona",
         "eyebrow_kit": "O que sua academia recebe",
         "kit_h": "Tudo instalado e funcionando.",
@@ -87,6 +90,47 @@ TRANSLATIONS = {
             "O valor da instalação depende de quantos tatames você tem e do "
             "cabeamento da sua academia. A visita pra orçamento é gratuita."
         ),
+        "mission_h": "Não perca a finalização da sua vida.",
+        "mission_p": (
+            "Você treina três vezes por semana, cinco anos seguidos. O momento "
+            "que você vai querer mostrar pro resto da vida dura oito segundos "
+            "e acontece numa terça à noite, sem ninguém filmando."
+        ),
+        "mission_kicker": "O botão está na parede pra isso.",
+        "eyebrow_offers": "Comece sem risco",
+        "offers_h": "Teste antes de assinar.",
+        "offers_p": (
+            "Duas formas de começar sem tirar nada do bolso: um mês de teste "
+            "com equipamento nosso, e um mês grátis pra cada academia que você "
+            "indicar."
+        ),
+        "trial_label": "Teste de 30 dias",
+        "trial_h": "A gente instala. Você usa 30 dias. Sem custo.",
+        "trial_p": (
+            "Temos um número limitado de equipamentos reservados pra teste. A "
+            "gente instala na sua academia, sua equipe usa por 30 dias e no "
+            "fim você decide. Não quis continuar? A gente busca — sem multa e "
+            "sem mensalidade."
+        ),
+        "trial_fine": (
+            "O equipamento é emprestado e continua sendo nosso durante o "
+            "teste, então tem um contrato de comodato simples cobrindo perda "
+            "ou dano. Só isso."
+        ),
+        "trial_cta": "Quero testar",
+        "referral_label": "Indique uma academia",
+        "referral_h": "Uma academia indicada, um mês grátis.",
+        "referral_p": (
+            "Indicou outra academia e ela fechou? A sua próxima mensalidade é "
+            "por nossa conta. Sem limite: cinco academias, cinco meses."
+        ),
+        "referral_fine": (
+            "O crédito entra quando a academia indicada conclui a instalação. "
+            "Vale pra quem já é cliente e pra quem ainda está testando."
+        ),
+        "referral_cta": "Indicar uma academia",
+        "wa_msg_trial": "Oi! Quero saber do teste de 30 dias do NO FLAGRA.",
+        "wa_msg_referral": "Oi! Quero indicar uma academia pro NO FLAGRA.",
         "how_h": "Do tatame pro celular, em 4 passos.",
         "how_p": (
             "A câmera já fica gravando o tempo todo. O botão só marca o que "
@@ -129,6 +173,14 @@ TRANSLATIONS = {
             "Não. Sua equipe entra pelo navegador do celular, com o login da "
             "academia. Funciona em qualquer celular."
         ),
+        "faq8_q": "O teste de 30 dias tem pegadinha?",
+        "faq8_a": (
+            "Não tem mensalidade, não tem taxa de instalação e não tem multa "
+            "pra devolver. O que existe é um contrato de comodato: o "
+            "equipamento é nosso durante o teste, e sua academia responde por "
+            "perda ou dano. Se decidir continuar depois dos 30 dias, a gente "
+            "aproveita o que já está instalado."
+        ),
         "faq7_q": "Dá pra mudar o tempo do clipe?",
         "faq7_a": (
             "Dá. Dez minutos é o padrão, porque cobre um round inteiro com "
@@ -169,7 +221,16 @@ TRANSLATIONS = {
             "enquadramento que fica gravando o tempo todo — o botão só "
             "recorta os últimos minutos dele, 10 por padrão."
         ),
-        "button_photo_alt": "O botão NO FLAGRA instalado na beira do tatame",
+        "button_photo_alt": (
+            "Botão vermelho do NO FLAGRA e a câmera instalados na parede da "
+            "academia, na saída do tatame"
+        ),
+        "button_photo_h": "O botão fica na parede, não no seu bolso",
+        "button_photo_p": (
+            "Câmera no alto, botão na altura da mão, o resto escondido. Quem "
+            "acabou de levar a finalização aperta na saída do tatame — sem "
+            "celular no chão, sem pedir pra ninguém filmar."
+        ),
         "legal_updated": "Atualizado em",
         "legal_back": "Voltar para a página inicial",
         "meta_desc_about": (
@@ -282,7 +343,10 @@ TRANSLATIONS = {
         "cta_band_link": "Get in touch",
         "nav_pricing": "Pricing",
         "nav_get_quote": "Request a quote",
-        "hero_note": "Installed for you, at your gym. No camera operator, no app to download.",
+        "hero_note": (
+            "Installed for you, at your gym. No camera operator, no app to "
+            "download. And you can try it free for 30 days."
+        ),
         "hero_cta_secondary": "See how it works",
         "eyebrow_kit": "What your gym gets",
         "kit_h": "Installed and running.",
@@ -324,6 +388,46 @@ TRANSLATIONS = {
             "The install price depends on how many mats you have and on your "
             "gym's cabling. The quoting visit is free."
         ),
+        "mission_h": "Don't miss the submission of your life.",
+        "mission_p": (
+            "You train three times a week, five years straight. The moment "
+            "you'll want to show for the rest of your life lasts eight seconds "
+            "and happens on a Tuesday night, with nobody filming."
+        ),
+        "mission_kicker": "That's what the button on the wall is for.",
+        "eyebrow_offers": "Start without the risk",
+        "offers_h": "Try it before you sign.",
+        "offers_p": (
+            "Two ways to start without spending anything: a month's trial on "
+            "our equipment, and a free month for every gym you refer."
+        ),
+        "trial_label": "30-day tryout",
+        "trial_h": "We install it. You use it for 30 days. No cost.",
+        "trial_p": (
+            "We keep a limited number of units set aside for trials. We "
+            "install one at your gym, your team uses it for 30 days, and at "
+            "the end you decide. Not for you? We come and collect it — no fee, "
+            "no monthly bill."
+        ),
+        "trial_fine": (
+            "The equipment is on loan and stays ours for the length of the "
+            "trial, so there's a short loan agreement covering loss or damage. "
+            "That's the whole of it."
+        ),
+        "trial_cta": "Ask about the tryout",
+        "referral_label": "Refer a gym",
+        "referral_h": "One gym referred, one month free.",
+        "referral_p": (
+            "Referred another gym and they signed? Your next month is on us. "
+            "No cap: five gyms, five months."
+        ),
+        "referral_fine": (
+            "The credit lands once the referred gym's install is finished. "
+            "Open to current customers and to gyms still on trial."
+        ),
+        "referral_cta": "Refer a gym",
+        "wa_msg_trial": "Hi! I'd like to know about the NO FLAGRA 30-day tryout.",
+        "wa_msg_referral": "Hi! I'd like to refer a gym to NO FLAGRA.",
         "how_h": "From the mat to your phone, in four steps.",
         "how_p": (
             "The camera is already recording, all the time. The button just "
@@ -366,6 +470,14 @@ TRANSLATIONS = {
             "No. Your team signs in from their phone's browser with the gym's "
             "login. It works on any phone."
         ),
+        "faq8_q": "Is there a catch to the 30-day tryout?",
+        "faq8_a": (
+            "No monthly bill, no install fee, and no penalty for giving it "
+            "back. What there is: a loan agreement. The equipment is ours for "
+            "the length of the trial, and your gym is on the hook for loss or "
+            "damage. Decide to stay after the 30 days and we keep what's "
+            "already installed."
+        ),
         "faq7_q": "Can the clip length be changed?",
         "faq7_a": (
             "Yes. Ten minutes is the default, because it comfortably covers a "
@@ -406,7 +518,16 @@ TRANSLATIONS = {
             "frame that keeps rolling all the time — the button just cuts the "
             "last few minutes out of it, 10 by default."
         ),
-        "button_photo_alt": "The NO FLAGRA button installed at the edge of the mat",
+        "button_photo_alt": (
+            "The NO FLAGRA red button and camera mounted on the gym wall, "
+            "on the way off the mat"
+        ),
+        "button_photo_h": "The button lives on the wall, not in your pocket",
+        "button_photo_p": (
+            "Camera up high, button at hand height, everything else out of "
+            "sight. Whoever just got submitted hits it on the way off the mat "
+            "— no phone on the floor, no asking someone to film."
+        ),
         "legal_updated": "Last updated",
         "legal_back": "Back to the home page",
         "meta_desc_about": (

@@ -145,6 +145,19 @@
   }
   .kit-item p { color: var(--dim); font-size: 13px; margin: 0; line-height: 1.55; }
 
+  /* ---- portrait photo beside its caption ---------------------------- */
+  .photo-split {
+    display: grid; grid-template-columns: minmax(0, .78fr) minmax(0, 1fr);
+    gap: 40px; align-items: center; margin-top: 44px;
+  }
+  @media (max-width: 760px) { .photo-split { grid-template-columns: 1fr; gap: 26px; } }
+  .photo-split-copy h3 {
+    font-family: var(--display); font-weight: 400; text-transform: uppercase;
+    font-size: clamp(20px, 2.6vw, 27px); line-height: 1.12; letter-spacing: .02em;
+    margin: 0 0 14px; color: var(--paper); text-wrap: balance;
+  }
+  .photo-split-copy p { color: var(--dim); font-size: 15px; line-height: 1.65; margin: 0; max-width: 42ch; }
+
   /* ---- benefits ---------------------------------------------------- */
   .benefits { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
   @media (max-width: 760px) { .benefits { grid-template-columns: 1fr; } }
@@ -158,6 +171,59 @@
     font-size: 16px; letter-spacing: .02em; margin: 0 0 6px; color: var(--paper);
   }
   .benefit p { color: var(--dim); font-size: 14px; margin: 0; line-height: 1.55; }
+
+  /* ---- mission ------------------------------------------------------ */
+  /* The one emotional beat on the page. It earns the extra type size by
+     being the only centred, full-width section — everything around it is
+     left-aligned and factual, so this reads as the page stopping to say
+     one thing. */
+  .mission {
+    text-align: center; padding: 92px 24px;
+    background:
+      radial-gradient(90% 120% at 50% 0%, rgba(255,212,0,.07), transparent 62%),
+      var(--panel-deep);
+  }
+  .mission .inner { max-width: 780px; margin: 0 auto; }
+  .mission h2 {
+    font-family: var(--display); font-weight: 400; text-transform: uppercase;
+    font-size: clamp(30px, 5.4vw, 56px); line-height: 1.02; letter-spacing: .01em;
+    margin: 0 auto 24px; color: var(--paper); text-wrap: balance; max-width: 15ch;
+  }
+  .mission p {
+    color: var(--dim); font-size: clamp(15px, 1.9vw, 17.5px); line-height: 1.65;
+    margin: 0 auto; max-width: 56ch; text-wrap: pretty;
+  }
+  .mission .kicker {
+    font-family: var(--display); font-weight: 400; text-transform: uppercase;
+    letter-spacing: .1em; font-size: clamp(14px, 1.7vw, 17px); color: var(--yellow);
+    margin: 26px auto 0; max-width: none;
+  }
+
+  /* ---- offers: tryout + referral ------------------------------------ */
+  .offers { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: stretch; }
+  @media (max-width: 760px) { .offers { grid-template-columns: 1fr; } }
+  .offer {
+    background: var(--panel); border: 1px solid var(--edge); border-radius: 12px;
+    padding: 28px; display: flex; flex-direction: column;
+  }
+  .offer .label {
+    font-family: var(--display); font-weight: 400; font-size: 13px; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--yellow); margin: 0 0 14px;
+  }
+  .offer h3 {
+    font-family: var(--display); font-weight: 400; text-transform: uppercase;
+    font-size: clamp(19px, 2.3vw, 24px); line-height: 1.14; letter-spacing: .02em;
+    margin: 0 0 12px; color: var(--paper); text-wrap: balance;
+  }
+  .offer > p { color: var(--dim); font-size: 14.5px; line-height: 1.6; margin: 0; }
+  .offer .fine {
+    color: var(--dim); font-size: 12.5px; line-height: 1.55; opacity: .78;
+    margin: 16px 0 0; padding-top: 15px; border-top: 1px solid var(--edge);
+  }
+  /* pushes the button to the card's foot so both cards' CTAs line up
+     however unevenly the copy above them wraps */
+  .offer .btn { align-self: flex-start; margin-top: auto; }
+  .offer .fine + .btn { margin-top: 22px; }
 
   /* ---- pricing ----------------------------------------------------- */
   .price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: stretch; }
@@ -383,13 +449,22 @@
       </div>
     </div>
 
-    {# Slot for the real button photo. Drop a file at app/static/button.jpg
-       and this appears on its own — no template change needed. Until then
-       the section simply ends after the four cards. #}
+    {# Slot for the button photo. Drop a file at app/static/button.jpg and this
+       appears on its own — no template change needed. Until then the section
+       simply ends after the four cards. The photo is portrait, so it sits
+       beside its caption rather than above it: full width it would leave a
+       700px-tall column with nothing next to it. #}
     {% if static_exists('button.jpg') %}
-    <div class="shot-wrap" style="max-width:620px;margin-top:34px;">
-      <img src="{{ url_for('static', filename='button.jpg') }}"
-           alt="{{ t('button_photo_alt') }}" loading="lazy">
+    <div class="photo-split">
+      <div class="shot-wrap">
+        <img src="{{ url_for('static', filename='button.jpg') }}"
+             alt="{{ t('button_photo_alt') }}" loading="lazy"
+             width="1100" height="1276">
+      </div>
+      <div class="photo-split-copy">
+        <h3>{{ t('button_photo_h') }}</h3>
+        <p>{{ t('button_photo_p') }}</p>
+      </div>
     </div>
     {% endif %}
   </div>
@@ -442,6 +517,17 @@
       <span class="shot-badge"><b></b>{{ t('showcase_badge') }}</span>
     </div>
     <p class="shot-cap">{{ t('showcase_caption') }}</p>
+  </div>
+</section>
+
+{# ---------- mission ---------- #}
+{# Sits between the footage and the price: you've just watched a mat, and the
+   next thing asked of you is money. This is the sentence in between. #}
+<section class="band mission">
+  <div class="inner">
+    <h2>{{ t('mission_h') }}</h2>
+    <p>{{ t('mission_p') }}</p>
+    <p class="kicker">{{ t('mission_kicker') }}</p>
   </div>
 </section>
 
@@ -501,6 +587,42 @@
   </div>
 </section>
 
+{# ---------- tryout + referral ---------- #}
+{# Directly after the price, because both of these exist to answer the
+   objection the price just raised. Flat panels on purpose — the yellow-ruled
+   CTA band below stays the only element with that treatment. #}
+<section class="band" id="teste">
+  <div class="inner">
+    <div class="eyebrow">{{ t('eyebrow_offers') }}</div>
+    <h2 class="band-h">{{ t('offers_h') }}</h2>
+    <p class="band-lead">{{ t('offers_p') }}</p>
+
+    <div class="offers">
+      <div class="offer">
+        <p class="label">{{ t('trial_label') }}</p>
+        <h3>{{ t('trial_h') }}</h3>
+        <p>{{ t('trial_p') }}</p>
+        <p class="fine">{{ t('trial_fine') }}</p>
+        <a class="btn btn-primary" target="_blank" rel="noopener"
+           href="https://wa.me/{{ whatsapp_number }}?text={{ t('wa_msg_trial')|urlencode }}">
+          {{ t('trial_cta') }}
+        </a>
+      </div>
+
+      <div class="offer">
+        <p class="label">{{ t('referral_label') }}</p>
+        <h3>{{ t('referral_h') }}</h3>
+        <p>{{ t('referral_p') }}</p>
+        <p class="fine">{{ t('referral_fine') }}</p>
+        <a class="btn btn-ghost" target="_blank" rel="noopener"
+           href="https://wa.me/{{ whatsapp_number }}?text={{ t('wa_msg_referral')|urlencode }}">
+          {{ t('referral_cta') }}
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
 {# ---------- mid-page CTA ---------- #}
 {# Sits after pricing rather than at the very bottom: the closing #orcamento
    section already carries the final ask, and two near-identical "let's put
@@ -525,7 +647,7 @@
         (t('faq1_q'), t('faq1_a')), (t('faq2_q'), t('faq2_a')),
         (t('faq3_q'), t('faq3_a')), (t('faq4_q'), t('faq4_a')),
         (t('faq5_q'), t('faq5_a')), (t('faq6_q'), t('faq6_a')),
-        (t('faq7_q'), t('faq7_a'))
+        (t('faq7_q'), t('faq7_a')), (t('faq8_q'), t('faq8_a'))
       ] %}
       <details>
         <summary>{{ q }}</summary>

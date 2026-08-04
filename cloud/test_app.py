@@ -120,15 +120,48 @@ def test_showcase_uses_the_real_mat_footage(client):
     assert "mat-poster.jpg" in body
 
 
-def test_button_photo_slot_stays_empty_until_the_file_exists(app, client):
-    # The slot must not render a broken <img> before the photo is shot.
+def test_static_exists_gates_the_optional_photo_slots(app):
+    # The slots must not render a broken <img> for an asset that isn't there.
     from app import create_app  # noqa: F401 — documents where the helper lives
 
     exists = app.jinja_env.globals["static_exists"]
     assert exists("mat-poster.jpg") is True
-    assert exists("button.jpg") is False
-    if not exists("button.jpg"):
-        assert b"button.jpg" not in client.get("/").data
+    assert exists("not-shot-yet.jpg") is False
+
+
+def test_button_photo_renders_with_its_caption_in_both_locales(client):
+    pt = client.get("/").data.decode("utf-8")
+    en = client.get("/?lang=en").data.decode("utf-8")
+    assert "button.jpg" in pt and "button.jpg" in en
+    assert "não no seu bolso" in pt
+    assert "not in your pocket" in en
+
+
+def test_mission_band_renders_in_both_locales(client):
+    pt = client.get("/").data.decode("utf-8")
+    en = client.get("/?lang=en").data.decode("utf-8")
+    assert "finalização da sua vida" in pt
+    assert "submission of your life" in en
+
+
+def test_tryout_offer_states_its_terms_and_links_to_whatsapp(client):
+    # The free-trial claim has a loan agreement behind it. Both halves have to
+    # be on the page — an offer this good with no terms beside it is the kind
+    # of thing Procon reads as an ad, not a contract.
+    pt = client.get("/").data.decode("utf-8")
+    assert "30 dias" in pt and "comodato" in pt
+    assert "wa_msg_trial" not in pt  # the key resolved, not leaked verbatim
+    assert "NO%20FLAGRA" in pt  # trial message reached the wa.me link
+
+    en = client.get("/?lang=en").data.decode("utf-8")
+    assert "30 days" in en and "loan agreement" in en
+
+
+def test_referral_offer_names_the_reward_in_both_locales(client):
+    pt = client.get("/").data.decode("utf-8")
+    en = client.get("/?lang=en").data.decode("utf-8")
+    assert "um mês grátis" in pt
+    assert "one month free" in en
 
 
 # ---- about, legal, robots, sitemap ----
