@@ -652,3 +652,222 @@ def test_clip_validates_its_payload(client, app):
 
     with app.app_context():
         assert Clip.query.count() == 0
+
+
+# ---- upload + sharing (Phase 3) -------------------------------------------
+#
+# These run against a fake object store rather than R2 itself: what's worth
+# testing here is our handshake and our tenancy rules, not botocore's ability
+# to sign a URL. scripts/mock_r2.py covers the real bytes-on-the-wire path.
+
+@pytest.fixture
+def storage_stub(monkeypatch):
+    """A stand-in bucket: a dict of key -> size."""
+    from app import storage
+
+    objects = {}
+    monkeypatch.setattr(storage, "is_configured", lambda: True)
+    monkeypatch.setattr(storage, "bucket", lambda: "test-bucket")
+    monkeypatch.setattr(
+        storage, "presign_put",
+        lambda key, content_type="video/mp4": f"https://stub.invalid/{key}?sig=put",
+    )
+    monkeypatch.setattr(
+        storage, "presign_get",
+        lambda key, download_as=None: f"https://stub.invalid/{key}?sig=get"
+        + ("&dl=1" if download_as else ""),
+    )
+    monkeypatch.setattr(storage, "head", lambda key: objects.get(key))
+    return objects
+
+
+def register_clip(client, headers, **overrides):
+    resp = client.post("/api/clips", json=clip_payload(**overrides), headers=headers)
+    assert resp.status_code in (200, 201), resp.get_json()
+    return resp.get_json()["clip_id"]
+
+
+def paired_device(client, app):
+    """A signed-up gym with a paired Pi — the state every upload test starts in."""
+    signup(client)
+    body = pair(client, issue_pairing_code(app)).get_json()
+    return auth_header(body["device_uuid"], body["device_key"])
+
+
+def test_registering_the_same_clip_twice_does_not_duplicate(client, app):
+    headers = paired_device(client, app)
+    first = client.post("/api/clips", json=clip_payload(), headers=headers)
+    second = client.post("/api/clips", json=clip_payload(), headers=headers)
+    assert first.status_code == 201
+    assert second.status_code == 200          # recognised as a retry
+    assert first.get_json()["clip_id"] == second.get_json()["clip_id"]
+
+    from app.models import Clip
+    with app.app_context():
+        assert Clip.query.count() == 1
+
+
+def test_upload_url_marks_the_clip_uploading(client, app, storage_stub):
+    headers = paired_device(client, app)
+    clip_id = register_clip(client, headers)
+
+    resp = client.post(f"/api/clips/{clip_id}/upload-url", json={}, headers=headers)
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["url"].startswith("https://stub.invalid/")
+    assert body["content_type"] == "video/mp4"
+
+    from app.models import Clip
+    with app.app_context():
+        clip = _db.session.get(Clip, clip_id)
+        assert clip.status == "uploading"
+        # the key groups by gym and camera, and carries the clip id
+        assert clip.s3_key.endswith(".mp4")
+        assert "/mat-camera/" in clip.s3_key
+        assert f"/{clip_id}-" in clip.s3_key
+
+
+def test_upload_url_is_stable_across_retries(client, app, storage_stub):
+    headers = paired_device(client, app)
+    clip_id = register_clip(client, headers)
+    first = client.post(f"/api/clips/{clip_id}/upload-url", json={}, headers=headers)
+    second = client.post(f"/api/clips/{clip_id}/upload-url", json={}, headers=headers)
+    # Same key, so a retry overwrites its own object rather than orphaning one.
+    assert first.get_json()["key"] == second.get_json()["key"]
+
+
+def test_clip_is_only_ready_once_the_bytes_are_really_there(client, app, storage_stub):
+    headers = paired_device(client, app)
+    clip_id = register_clip(client, headers)
+    slot = client.post(f"/api/clips/{clip_id}/upload-url", json={}, headers=headers).get_json()
+
+    # The Pi claims success but nothing was stored: we must not believe it.
+    resp = client.post(f"/api/clips/{clip_id}/uploaded", json={}, headers=headers)
+    assert resp.status_code == 409
+    from app.models import Clip
+    with app.app_context():
+        assert _db.session.get(Clip, clip_id).status == "failed"
+
+    # Now the object exists.
+    storage_stub[slot["key"]] = 12345
+    resp = client.post(f"/api/clips/{clip_id}/uploaded", json={}, headers=headers)
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["status"] == "ready"
+    assert body["size_bytes"] == 12345          # trusted from the bucket, not the Pi
+    assert body["share_url"].endswith(body["share_token"])
+
+
+def test_upload_can_be_reported_as_failed(client, app, storage_stub):
+    headers = paired_device(client, app)
+    clip_id = register_clip(client, headers)
+    client.post(f"/api/clips/{clip_id}/upload-url", json={}, headers=headers)
+
+    resp = client.post(f"/api/clips/{clip_id}/uploaded",
+                       json={"failed": True, "error": "connection reset"}, headers=headers)
+    assert resp.status_code == 200
+    from app.models import Clip
+    with app.app_context():
+        clip = _db.session.get(Clip, clip_id)
+        assert clip.status == "failed"
+        assert "connection reset" in clip.upload_error
+
+
+def test_a_device_cannot_touch_another_gyms_clip(client, app, storage_stub):
+    mine = paired_device(client, app)
+    clip_id = register_clip(client, mine)
+
+    client.post("/logout")
+    signup(client, email="b@example.com", gym_name="Outra Academia", name="B")
+    other = pair(client, issue_pairing_code(app, gym_name="Outra Academia")).get_json()
+    theirs = auth_header(other["device_uuid"], other["device_key"])
+
+    assert client.post(f"/api/clips/{clip_id}/upload-url", json={}, headers=theirs).status_code == 404
+    assert client.post(f"/api/clips/{clip_id}/uploaded", json={}, headers=theirs).status_code == 404
+    assert client.get(f"/api/clips/{clip_id}", headers=theirs).status_code == 404
+
+
+def test_upload_endpoints_need_a_device_key(client, app, storage_stub):
+    headers = paired_device(client, app)
+    clip_id = register_clip(client, headers)
+    assert client.post(f"/api/clips/{clip_id}/upload-url", json={}).status_code == 401
+    assert client.post(f"/api/clips/{clip_id}/uploaded", json={}).status_code == 401
+
+
+def test_upload_url_says_so_when_storage_is_unconfigured(client, app, monkeypatch):
+    from app import storage
+    monkeypatch.setattr(storage, "is_configured", lambda: False)
+    headers = paired_device(client, app)
+    clip_id = register_clip(client, headers)
+    resp = client.post(f"/api/clips/{clip_id}/upload-url", json={}, headers=headers)
+    assert resp.status_code == 503
+    assert "not configured" in resp.get_json()["error"]
+
+
+def share_a_clip(client, app, storage_stub):
+    headers = paired_device(client, app)
+    clip_id = register_clip(client, headers)
+    slot = client.post(f"/api/clips/{clip_id}/upload-url", json={}, headers=headers).get_json()
+    storage_stub[slot["key"]] = 999
+    body = client.post(f"/api/clips/{clip_id}/uploaded", json={}, headers=headers).get_json()
+    return body["share_token"]
+
+
+def test_share_page_plays_without_a_login(client, app, storage_stub):
+    token = share_a_clip(client, app, storage_stub)
+    resp = client.get(f"/c/{token}")
+    assert resp.status_code == 200
+    body = resp.get_data(as_text=True)
+    assert f"/c/{token}/video" in body
+    # a 300 MB original must not auto-download on someone's mobile data
+    assert 'preload="metadata"' in body
+    # a shared clip is not something we want indexed
+    assert "noindex" in body
+
+
+def test_share_video_redirects_to_short_lived_storage(client, app, storage_stub):
+    token = share_a_clip(client, app, storage_stub)
+    resp = client.get(f"/c/{token}/video")
+    assert resp.status_code == 302
+    assert resp.headers["Location"].startswith("https://stub.invalid/")
+
+    download = client.get(f"/c/{token}/video?dl=1")
+    assert "dl=1" in download.headers["Location"]
+
+
+def test_unknown_or_unshared_tokens_are_404(client, app, storage_stub):
+    assert client.get("/c/definitely-not-a-token").status_code == 404
+    assert client.get("/c/definitely-not-a-token/video").status_code == 404
+
+    # a clip that exists but was never uploaded has no token, and the row it
+    # belongs to must not be reachable by guessing
+    headers = paired_device(client, app)
+    register_clip(client, headers)
+    from app.models import Clip
+    with app.app_context():
+        assert Clip.query.first().share_token is None
+
+
+def test_share_tokens_are_not_guessable_from_the_id(client, app, storage_stub):
+    token = share_a_clip(client, app, storage_stub)
+    assert len(token) >= 20
+    assert token not in ("1", "2")
+
+
+def test_an_empty_object_is_not_a_successful_upload(client, app, storage_stub):
+    """A truncated or aborted PUT leaves a 0-byte object behind. Publishing a
+    share link to that would give someone a video that plays nothing."""
+    headers = paired_device(client, app)
+    clip_id = register_clip(client, headers)
+    slot = client.post(f"/api/clips/{clip_id}/upload-url", json={}, headers=headers).get_json()
+
+    storage_stub[slot["key"]] = 0
+    resp = client.post(f"/api/clips/{clip_id}/uploaded", json={}, headers=headers)
+    assert resp.status_code == 409
+
+    from app.models import Clip
+    with app.app_context():
+        clip = _db.session.get(Clip, clip_id)
+        assert clip.status == "failed"
+        assert clip.upload_error == "the object is empty"
+        assert clip.share_token is None      # nothing public was minted

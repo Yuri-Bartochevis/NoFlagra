@@ -8,6 +8,10 @@ storage/*
 thumbs/*
 !thumbs/.gitkeep
 
+# Settings saved from the manage page, and the keep-list. Per-install state,
+# not source: the defaults live in docker-compose.yml.
+data/
+
 # Frigate writes these into the config directory at runtime
 frigate/frigate.db
 frigate/frigate.db-*

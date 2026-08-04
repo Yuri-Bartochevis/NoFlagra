@@ -10,14 +10,16 @@ import hmac
 from datetime import datetime, timezone
 from functools import wraps
 
-from flask import Blueprint, g, jsonify, request
+from flask import Blueprint, current_app, g, jsonify, request
 
+from .. import storage
 from ..extensions import db
 from ..models import (
     Camera,
     Clip,
     Device,
     generate_device_key,
+    generate_share_token,
     hash_device_key,
     hash_pairing_code,
     make_camera_slug,
@@ -174,6 +176,22 @@ def create_clip():
 
     local_filename = str(payload.get("local_filename") or "").strip() or None
 
+    # Idempotent on the filename. Frigate's export names carry the camera, the
+    # exact window and a random export id, so two different presses can't
+    # collide — which means a repeat POST is a retry, not a new clip. Without
+    # this, a Pi that reconciles its disk against the cloud after an outage
+    # would register everything twice.
+    if local_filename:
+        existing = Clip.query.filter_by(
+            establishment_id=device.establishment_id,
+            camera_id=camera.id,
+            local_filename=local_filename,
+        ).first()
+        if existing is not None:
+            device.last_seen_at = _now()
+            db.session.commit()
+            return jsonify({"clip_id": existing.id, "status": existing.status}), 200
+
     clip = Clip(
         establishment_id=device.establishment_id,
         camera_id=camera.id,
@@ -191,3 +209,149 @@ def create_clip():
     db.session.commit()
 
     return jsonify({"clip_id": clip.id, "status": clip.status}), 201
+
+
+# ---- upload (Phase 3) -----------------------------------------------------
+#
+# Three steps, deliberately: ask, upload, confirm.
+#
+#   1. POST /api/clips/<id>/upload-url  -> a presigned PUT, one object only
+#   2. PUT  <that url>                  -> the Pi sends bytes straight to R2,
+#                                          never through this app
+#   3. POST /api/clips/<id>/uploaded    -> we HEAD the object and, only if the
+#                                          bytes are really there, mark it ready
+#
+# Step 2 not passing through us is the point: a 300 MB clip would otherwise
+# occupy a web worker for minutes, and the free tier has two of them.
+
+
+def _clip_for_device(clip_id):
+    """A clip belonging to the calling device's establishment, or None.
+
+    Scoped by establishment rather than clip id alone, so one gym's Pi can
+    never touch another gym's footage even if it guesses an id.
+    """
+    return Clip.query.filter_by(
+        id=clip_id, establishment_id=g.device.establishment_id
+    ).first()
+
+
+@device_api_bp.route("/clips/<int:clip_id>/upload-url", methods=["POST"])
+@device_auth
+def clip_upload_url(clip_id):
+    clip = _clip_for_device(clip_id)
+    if clip is None:
+        return _error("clip not found", 404)
+
+    if not storage.is_configured():
+        return _error("object storage is not configured on the server", 503)
+
+    payload = request.get_json(silent=True) or {}
+    filename = str(payload.get("local_filename") or clip.local_filename or "").strip()
+    if not filename:
+        return _error("local_filename is required to build a storage key", 400)
+
+    # Reuse the key on a retry so a failed upload overwrites its own object
+    # instead of leaving an orphan behind to pay for.
+    key = clip.s3_key or storage.build_key(clip, filename)
+
+    try:
+        url = storage.presign_put(key)
+    except storage.StorageError as exc:
+        return _error(f"could not sign an upload URL: {exc}", 502)
+
+    clip.s3_key = key
+    clip.status = "uploading"
+    clip.upload_error = None
+    g.device.last_seen_at = _now()
+    db.session.commit()
+
+    return jsonify({
+        "clip_id": clip.id,
+        "url": url,
+        "key": key,
+        "content_type": "video/mp4",
+        "expires_in": storage.upload_ttl(),
+    }), 200
+
+
+@device_api_bp.route("/clips/<int:clip_id>/uploaded", methods=["POST"])
+@device_auth
+def clip_uploaded(clip_id):
+    """Confirm an upload landed. Trust, then verify — mostly verify."""
+    clip = _clip_for_device(clip_id)
+    if clip is None:
+        return _error("clip not found", 404)
+    if not clip.s3_key:
+        return _error("this clip has no upload in progress", 409)
+
+    payload = request.get_json(silent=True) or {}
+
+    if payload.get("failed"):
+        clip.status = "failed"
+        clip.upload_error = str(payload.get("error") or "upload failed")[:255]
+        db.session.commit()
+        return jsonify({"clip_id": clip.id, "status": clip.status}), 200
+
+    if not storage.is_configured():
+        return _error("object storage is not configured on the server", 503)
+
+    # The Pi saying "done" is a claim, not proof. Ask the bucket.
+    try:
+        size = storage.head(clip.s3_key)
+    except storage.StorageError as exc:
+        return _error(f"could not verify the upload: {exc}", 502)
+
+    # Zero counts as "did not land" too. An empty object is what a truncated
+    # or aborted PUT leaves behind, and marking that "ready" would publish a
+    # share link to a clip that plays nothing.
+    if not size:
+        clip.status = "failed"
+        clip.upload_error = (
+            "the object is not in the bucket" if size is None else "the object is empty"
+        )
+        db.session.commit()
+        return _error("no usable object at that key — the upload did not land", 409)
+
+    clip.size_bytes = size
+    clip.status = "ready"
+    clip.upload_error = None
+    if not clip.share_token:
+        clip.share_token = generate_share_token()
+        clip.shared_at = _now()
+    g.device.last_seen_at = _now()
+    db.session.commit()
+
+    return jsonify({
+        "clip_id": clip.id,
+        "status": clip.status,
+        "size_bytes": clip.size_bytes,
+        "share_token": clip.share_token,
+        "share_url": _share_url(clip),
+    }), 200
+
+
+@device_api_bp.route("/clips/<int:clip_id>", methods=["GET"])
+@device_auth
+def clip_state(clip_id):
+    """What the cloud thinks of this clip. Lets the Pi resync after a reboot
+    without re-uploading something that already made it."""
+    clip = _clip_for_device(clip_id)
+    if clip is None:
+        return _error("clip not found", 404)
+    return jsonify({
+        "clip_id": clip.id,
+        "status": clip.status,
+        "size_bytes": clip.size_bytes,
+        "local_filename": clip.local_filename,
+        "upload_error": clip.upload_error,
+        "share_token": clip.share_token,
+        "share_url": _share_url(clip),
+    }), 200
+
+
+def _share_url(clip):
+    if not clip.is_shared:
+        return None
+    base = current_app.config["SITE_URL"]
+    return f"{base}/c/{clip.share_token}"

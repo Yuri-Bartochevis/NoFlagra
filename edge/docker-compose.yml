@@ -26,19 +26,35 @@ services:
     ports:
       - "5001:5001"
     volumes:
-      # read-only: the dashboard lists and serves finished clips
+      # read-only: the continuous recording belongs to Frigate. We only read
+      # it to measure how fast it grows.
       - ./storage:/media/frigate:ro
+      # ...but exports are ours to manage, so that one path is writable.
+      # A nested mount overrides the :ro above for this subtree only.
+      - ./storage/exports:/media/frigate/exports
       # writable: cached preview images, regenerated if deleted
       - ./thumbs:/thumbs
+      # writable: settings the manage page edits, and the keep-list
+      - ./data:/data
     environment:
       RECEIVER_SECRET: "${RECEIVER_SECRET:?set RECEIVER_SECRET in .env}"
+      # Password for deleting clips and changing settings. Unset falls back to
+      # RECEIVER_SECRET — which is baked into the ESP32 firmware, so set it.
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:-}"
       FRIGATE_URL: "http://frigate:5000"
       CAMERA_NAME: "mat_camera"
+      # These three are defaults only. Once the manage page saves them they
+      # live in data/settings.json, which wins from then on.
       LOOKBACK_SECONDS: "600"
       POST_ROLL_SECONDS: "15"
       COOLDOWN_SECONDS: "30"   # duplicate presses blocked for this long
       EXPORTS_DIR: "/media/frigate/exports"
+      RECORDINGS_DIR: "/media/frigate/recordings"
       THUMBS_DIR: "/thumbs"
+      DATA_DIR: "/data"
+      # Mirrors record.continuous.days in frigate/config.yml. Display only —
+      # keep the two in step by hand.
+      FRIGATE_RETENTION_DAYS: "3"
       PAGE_SIZE: "12"          # clips loaded per page
     depends_on:
       - frigate

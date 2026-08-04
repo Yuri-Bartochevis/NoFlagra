@@ -6,4 +6,6 @@ Flask-Migrate==4.0.7
 psycopg2-binary==2.9.9
 python-dotenv==1.0.1
 
-# Added in Phase 3 (S3 upload pipeline): boto3
+# Phase 3: signing R2 upload/playback URLs. R2 speaks the S3 API, so this is
+# the same client either way — only R2_ENDPOINT changes.
+boto3==1.35.36

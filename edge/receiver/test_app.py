@@ -13,20 +13,36 @@ import pytest
 import app as receiver
 
 
+def use(**kwargs):
+    """Set runtime settings directly.
+
+    The clip window is no longer module constants — it lives in the settings
+    dict the manage page edits, with the env vars as defaults. Tests poke the
+    dict rather than going through save_settings(), which would try to write
+    to DATA_DIR.
+    """
+    receiver._settings.update(kwargs)
+
+
 @pytest.fixture
 def client():
     receiver.app.config["TESTING"] = True
     receiver._last_trigger = 0.0
     receiver._recent.clear()
-    receiver.POST_ROLL_SECONDS = 0  # don't make the tests wait
-    receiver.COOLDOWN_SECONDS = 20
-    receiver.LOOKBACK_SECONDS = 600
+    use(post_roll_seconds=0,   # don't make the tests wait
+        cooldown_seconds=20,
+        lookback_seconds=600)
     receiver.SHARED_SECRET = "test-secret"
+    receiver.ADMIN_PASSWORD = "test-admin"
     receiver.DRY_RUN = True  # stray background threads must not hit the network
     # Unpaired by default, so no test accidentally reaches for the cloud.
     receiver.CLOUD_URL = ""
     receiver.DEVICE_UUID = ""
     receiver.DEVICE_KEY = ""
+    # The upload worker runs for real once app.py is imported. Park it, so a
+    # test that queues something decides for itself when it gets processed
+    # instead of racing a thread that would try to reach the network.
+    receiver.uploads.stop()
     for t in receiver._threads:
         t.join(timeout=2)
     receiver._threads.clear()
@@ -71,7 +87,7 @@ def test_export_window_is_lookback_plus_postroll(client):
         calls.append((camera, start_ts, end_ts, name))
         return True, {"success": True}
 
-    receiver.POST_ROLL_SECONDS = 0
+    use(post_roll_seconds=0)
     with patch.object(receiver, "export_range", side_effect=fake_export):
         press(client)
         drain()
@@ -92,7 +108,8 @@ def test_cooldown_blocks_rapid_second_press(client):
 
 
 def test_cooldown_expires(client):
-    receiver.COOLDOWN_SECONDS = 0.2
+    # A real (if tiny) window, so this tests expiry rather than "no cooldown".
+    use(cooldown_seconds=0.2)
     with patch.object(receiver, "export_range", return_value=(True, {})):
         assert press(client).status_code == 202
         time.sleep(0.3)
@@ -109,7 +126,7 @@ def test_failed_export_is_recorded_not_crashed(client):
 
 
 def test_clips_endpoint_lists_newest_first(client):
-    receiver.COOLDOWN_SECONDS = 0
+    use(cooldown_seconds=0)
     with patch.object(receiver, "export_range", return_value=(True, {})):
         press(client)
         drain()
@@ -278,7 +295,7 @@ def test_simultaneous_presses_yield_exactly_one_export(client):
     """20 threads hit the endpoint at once; only one may get through."""
     import threading
 
-    receiver.COOLDOWN_SECONDS = 30
+    use(cooldown_seconds=30)
     exports = []
     barrier = threading.Barrier(20)
     codes = []
@@ -310,7 +327,7 @@ def test_simultaneous_presses_yield_exactly_one_export(client):
 
 def test_rejected_duplicate_does_not_extend_the_window(client):
     """Hammering the button must not push the unlock further away."""
-    receiver.COOLDOWN_SECONDS = 2
+    use(cooldown_seconds=2)
     with patch.object(receiver, "export_range", return_value=(True, {})):
         assert press(client).status_code == 202
         first = press(client).get_json()["retry_after"]
@@ -320,7 +337,7 @@ def test_rejected_duplicate_does_not_extend_the_window(client):
 
 
 def test_cooldown_response_states_the_window(client):
-    receiver.COOLDOWN_SECONDS = 30
+    use(cooldown_seconds=30)
     with patch.object(receiver, "export_range", return_value=(True, {})):
         press(client)
         body = press(client).get_json()
@@ -330,7 +347,7 @@ def test_cooldown_response_states_the_window(client):
 
 
 def test_health_reports_cooldown_and_block_count(client):
-    receiver.COOLDOWN_SECONDS = 30
+    use(cooldown_seconds=30)
     receiver._blocked = 0
     with patch.object(receiver, "export_range", return_value=(True, {})):
         press(client)
@@ -344,7 +361,7 @@ def test_health_reports_cooldown_and_block_count(client):
 
 def test_unauthorised_requests_never_start_a_cooldown(client):
     """A wrong key must not lock out the real button."""
-    receiver.COOLDOWN_SECONDS = 30
+    use(cooldown_seconds=30)
     for _ in range(5):
         assert press(client, token="wrong").status_code == 401
     with patch.object(receiver, "export_range", return_value=(True, {})):
@@ -373,8 +390,7 @@ def test_unpaired_receiver_never_calls_the_cloud(client):
 
 def test_paired_receiver_registers_the_clip(client):
     pair_receiver()
-    receiver.LOOKBACK_SECONDS = 600
-    receiver.POST_ROLL_SECONDS = 0
+    use(lookback_seconds=600, post_roll_seconds=0)
 
     with patch.object(receiver, "export_range", return_value=(True, {})), \
             patch.object(receiver.requests, "post") as post:
@@ -453,3 +469,388 @@ def test_health_reports_pairing_without_leaking_the_key(client):
     assert body["cloud_paired"] is True
     assert body["device_uuid"] == "abc-123"
     assert "secret-device-key" not in str(body)
+
+
+# ---- export filenames (Frigate does not use the name we pass) ----
+
+def test_export_filename_matches_what_frigate_actually_writes():
+    """Regression: we used to register "<our name>.mp4" with the cloud, but
+    Frigate builds the path from the camera, the window and the export id —
+    our name only becomes a display label. This is a real filename produced
+    by a real export, reproduced from the API's export_id."""
+    from datetime import datetime
+
+    start = datetime(2026, 7, 23, 16, 46, 52).timestamp()
+    end = datetime(2026, 7, 23, 16, 57, 7).timestamp()
+    got = receiver.frigate_export_filename("mat_camera", start, end, "mat_camera_7o4jf6")
+    assert got == "mat_camera_20260723_164652-20260723_165707_7o4jf6.mp4"
+
+
+def test_export_filename_is_none_without_an_id():
+    assert receiver.frigate_export_filename("mat_camera", 1000, 1600, None) is None
+
+
+def test_cloud_registration_uses_the_real_filename(client):
+    pair_receiver()
+    with patch.object(receiver, "export_range",
+                      return_value=(True, {"export_id": "mat_camera_ab12cd"})), \
+            patch.object(receiver.requests, "post") as post:
+        post.return_value.status_code = 201
+        assert press(client).status_code == 202
+        drain()
+
+    sent = post.call_args[1]["json"]["local_filename"]
+    assert sent.startswith("mat_camera_")
+    assert sent.endswith("_ab12cd.mp4")
+
+
+# ---- runtime settings ----
+
+@pytest.fixture
+def admin(client, tmp_path):
+    """A client whose settings/keep files land somewhere writable."""
+    receiver.DATA_DIR = str(tmp_path / "data")
+    yield client
+
+
+def auth(token="test-admin"):
+    return {"X-Admin-Token": token}
+
+
+def test_settings_are_readable_without_the_password(admin):
+    body = admin.get("/api/settings").get_json()
+    assert body["settings"]["lookback_seconds"] == 600
+    assert body["limits"]["lookback_seconds"]["max"] == 3600
+
+
+def test_settings_change_needs_the_password(admin):
+    assert admin.post("/api/settings", json={"lookback_seconds": 300}).status_code == 401
+    assert admin.post("/api/settings", json={"lookback_seconds": 300},
+                      headers=auth("wrong")).status_code == 401
+
+
+def test_settings_round_trip_and_persist(admin):
+    resp = admin.post("/api/settings", json={"lookback_seconds": 300}, headers=auth())
+    assert resp.status_code == 200
+    assert resp.get_json()["settings"]["lookback_seconds"] == 300
+    # survives a reload from disk
+    assert receiver.load_settings()["lookback_seconds"] == 300
+
+
+def test_settings_reject_out_of_range(admin):
+    resp = admin.post("/api/settings", json={"lookback_seconds": 99999}, headers=auth())
+    assert resp.status_code == 400
+    assert "between" in resp.get_json()["error"]
+
+
+def test_settings_reject_unknown_keys(admin):
+    resp = admin.post("/api/settings", json={"delete_everything": 1}, headers=auth())
+    assert resp.status_code == 400
+
+
+def test_a_press_uses_the_new_lookback(admin):
+    admin.post("/api/settings", json={"lookback_seconds": 120, "post_roll_seconds": 0},
+               headers=auth())
+    calls = []
+    with patch.object(receiver, "export_range",
+                      side_effect=lambda c, s, e, n: (calls.append(e - s), (True, {}))[1]):
+        press(admin)
+        drain()
+    assert round(calls[0]) == 120
+
+
+def test_bad_settings_file_falls_back_to_defaults(admin, tmp_path):
+    import os
+    os.makedirs(receiver.DATA_DIR, exist_ok=True)
+    with open(os.path.join(receiver.DATA_DIR, "settings.json"), "w") as fh:
+        fh.write("{ not json at all")
+    # A corrupt file must never stop the gym recording.
+    assert receiver.load_settings()["lookback_seconds"] == receiver.LOOKBACK_SECONDS
+
+
+# ---- deleting and keeping clips ----
+
+def test_delete_needs_the_password(admin, tmp_path):
+    receiver.EXPORTS_DIR = seed(tmp_path, [("a.mp4", 60)])
+    assert admin.delete("/api/clips/a.mp4").status_code == 401
+    assert (tmp_path / "a.mp4").exists()
+
+
+def test_delete_removes_the_file(admin, tmp_path):
+    receiver.EXPORTS_DIR = seed(tmp_path, [("a.mp4", 60)])
+    resp = admin.delete("/api/clips/a.mp4", headers=auth())
+    assert resp.status_code == 200
+    assert resp.get_json()["deleted"] == "a.mp4"
+    assert not (tmp_path / "a.mp4").exists()
+
+
+def test_delete_refuses_paths_outside_exports(admin, tmp_path):
+    receiver.EXPORTS_DIR = str(tmp_path)
+    victim = tmp_path.parent / "secret.mp4"
+    victim.write_text("nope")
+    for attempt in ("../secret.mp4", "..%2Fsecret.mp4", "sub/secret.mp4"):
+        assert admin.delete(f"/api/clips/{attempt}", headers=auth()).status_code in (400, 404)
+    assert victim.exists()
+
+
+def test_delete_refuses_non_mp4(admin, tmp_path):
+    receiver.EXPORTS_DIR = str(tmp_path)
+    (tmp_path / "settings.json").write_text("{}")
+    assert admin.delete("/api/clips/settings.json", headers=auth()).status_code == 400
+    assert (tmp_path / "settings.json").exists()
+
+
+def test_kept_clips_cannot_be_deleted(admin, tmp_path):
+    receiver.EXPORTS_DIR = seed(tmp_path, [("a.mp4", 60)])
+    assert admin.post("/api/clips/a.mp4/keep", json={"keep": True},
+                      headers=auth()).status_code == 200
+    assert admin.delete("/api/clips/a.mp4", headers=auth()).status_code == 409
+    assert (tmp_path / "a.mp4").exists()
+
+    admin.post("/api/clips/a.mp4/keep", json={"keep": False}, headers=auth())
+    assert admin.delete("/api/clips/a.mp4", headers=auth()).status_code == 200
+
+
+def test_clip_list_reports_the_keep_flag(admin, tmp_path):
+    receiver.EXPORTS_DIR = seed(tmp_path, [("a.mp4", 60), ("b.mp4", 120)])
+    admin.post("/api/clips/a.mp4/keep", json={"keep": True}, headers=auth())
+    clips = {c["file"]: c["kept"] for c in admin.get("/api/clips").get_json()["clips"]}
+    assert clips == {"a.mp4": True, "b.mp4": False}
+
+
+# ---- storage projection ----
+
+def test_storage_reports_disk_and_measures_the_bitrate(admin, tmp_path):
+    exports = tmp_path / "exports"
+    exports.mkdir()
+    receiver.EXPORTS_DIR = seed(exports, [("a.mp4", 60)])
+
+    recordings = tmp_path / "recordings" / "2026-07-23" / "14" / "mat_camera"
+    recordings.mkdir(parents=True)
+    for i in range(6):
+        (recordings / f"{i:02d}.00.mp4").write_bytes(b"x" * 1_000_000)
+    receiver.RECORDINGS_DIR = str(tmp_path / "recordings")
+    receiver._rate_cache["at"] = 0  # bypass the cache
+
+    body = admin.get("/api/storage").get_json()
+    assert body["disk"]["total_gb"] > 0
+    # 6 MB in one hour -> 144 MB/day
+    assert body["rate"]["gb_per_day"] == round(6_000_000 * 24 / 1073741824, 2)
+    assert body["projection"]["max_retention_days"] > 0
+    assert [o["days"] for o in body["projection"]["options"]] == [1, 2, 3, 7, 14, 30]
+
+
+def test_storage_says_so_when_there_is_nothing_to_measure(admin, tmp_path):
+    receiver.RECORDINGS_DIR = str(tmp_path / "empty")
+    receiver.EXPORTS_DIR = str(tmp_path)
+    receiver._rate_cache["at"] = 0
+    body = admin.get("/api/storage").get_json()
+    assert body["rate"] is None
+    assert "note" in body
+
+
+def test_manage_page_renders(admin):
+    body = admin.get("/manage").get_data(as_text=True)
+    assert "Storage" in body and "Clip window" in body
+
+
+# ---- uploads and sharing (Phase 3) ----
+
+import uploader as up_mod
+
+
+def test_export_name_parses_into_a_window():
+    got = up_mod.parse_export_name("mat_camera_20260723_164652-20260723_165707_7o4jf6.mp4")
+    assert got is not None
+    camera, start, end = got
+    assert camera == "mat_camera"
+    assert (end - start).total_seconds() == 615
+
+
+def test_export_name_rejects_rubbish():
+    for bad in ("", "notaclip.mp4", "mat_camera_nope-nope_x.mp4", "../escape.mp4"):
+        assert up_mod.parse_export_name(bad) is None
+
+
+@pytest.fixture
+def queue(tmp_path):
+    """An Uploader wired to a temp dir, not started — tests drive it by hand."""
+    exports = tmp_path / "exports"
+    exports.mkdir()
+    data = tmp_path / "data"
+    data.mkdir()
+    u = up_mod.Uploader({
+        "data_dir": str(data), "exports_dir": str(exports),
+        "camera_name": "mat_camera", "cloud_url": "https://cloud.example",
+        "device_uuid": "abc-123", "device_key": "key", "paired": True,
+        "timeout": 5, "upload_timeout": 30,
+    }, log=lambda m: None)
+    u.exports = exports
+    u.data = data
+    return u
+
+
+CLIP = "mat_camera_20260803_140000-20260803_141015_zz9wq1.mp4"
+
+
+def make_clip(queue, name=CLIP, size=2048):
+    (queue.exports / name).write_bytes(b"v" * size)
+    return name
+
+
+def test_queue_survives_a_restart(queue, tmp_path):
+    make_clip(queue)
+    queue.enqueue(CLIP)
+
+    # a brand new Uploader over the same data dir — as if the Pi rebooted
+    reborn = up_mod.Uploader(dict(queue.config), log=lambda m: None)
+    assert reborn.state_for(CLIP)["status"] == "queued"
+
+
+def test_an_upload_interrupted_by_a_power_cut_is_retried(queue):
+    make_clip(queue)
+    queue.enqueue(CLIP)
+    queue._set(CLIP, status="uploading")
+
+    reborn = up_mod.Uploader(dict(queue.config), log=lambda m: None)
+    # "uploading" means nobody confirmed it landed, so it goes back in the queue
+    assert reborn.state_for(CLIP)["status"] == "queued"
+
+
+def test_an_unpaired_pi_fails_the_clip_permanently(queue):
+    make_clip(queue)
+    queue.config["paired"] = False
+    queue.enqueue(CLIP)
+    queue._upload_one(CLIP)
+    record = queue.state_for(CLIP)
+    assert record["status"] == "failed"
+    assert "not paired" in record["error"]
+
+
+def test_a_deleted_file_drops_out_of_the_queue(queue):
+    queue.enqueue("gone.mp4")
+    queue._upload_one("gone.mp4")
+    assert queue.state_for("gone.mp4") is None
+
+
+def test_a_full_upload_records_the_share_url(queue):
+    make_clip(queue)
+
+    calls = []
+
+    class Resp:
+        def __init__(self, code, body=None):
+            self.status_code = code
+            self._body = body or {}
+            self.text = ""
+
+        def json(self):
+            return self._body
+
+    def fake_post(url, **kwargs):
+        calls.append(url)
+        if url.endswith("/api/clips"):
+            return Resp(201, {"clip_id": 7})
+        if url.endswith("/upload-url"):
+            return Resp(200, {"url": "https://r2.example/put", "content_type": "video/mp4"})
+        if url.endswith("/uploaded"):
+            return Resp(200, {"status": "ready", "share_url": "https://noflagra.app/c/tok"})
+        raise AssertionError(f"unexpected POST {url}")
+
+    with patch.object(up_mod.requests, "post", side_effect=fake_post), \
+            patch.object(up_mod.requests, "put", return_value=Resp(200)):
+        queue._upload_one(CLIP)
+
+    record = queue.state_for(CLIP)
+    assert record["status"] == "ready"
+    assert record["share_url"] == "https://noflagra.app/c/tok"
+    assert record["clip_id"] == 7
+    # registered, asked for a slot, confirmed — in that order
+    assert [c.rsplit("/", 1)[-1] for c in calls] == ["clips", "upload-url", "uploaded"]
+
+
+def test_a_network_failure_schedules_a_retry_not_a_death(queue):
+    make_clip(queue)
+    with patch.object(up_mod.requests, "post",
+                      side_effect=up_mod.requests.RequestException("no route")):
+        queue._upload_one(CLIP)
+
+    record = queue.state_for(CLIP)
+    assert record["status"] == "retry"
+    assert record["attempts"] == 1
+    assert record["not_before"] > time.time()   # backing off, will come back
+
+
+def test_retries_give_up_eventually(queue):
+    make_clip(queue)
+    with patch.object(up_mod.requests, "post",
+                      side_effect=up_mod.requests.RequestException("no route")):
+        for _ in range(up_mod.MAX_ATTEMPTS):
+            queue._set(CLIP, not_before=0)
+            queue._upload_one(CLIP)
+
+    record = queue.state_for(CLIP)
+    assert record["status"] == "failed"
+    assert record["attempts"] == up_mod.MAX_ATTEMPTS
+
+
+def test_a_clip_already_ready_is_not_queued_again(queue):
+    make_clip(queue)
+    queue._set(CLIP, status="ready", share_url="https://noflagra.app/c/tok")
+    assert queue.enqueue(CLIP)["status"] == "ready"
+
+
+# ---- the receiver's share endpoints ----
+
+def test_share_needs_the_password(admin, tmp_path):
+    receiver.EXPORTS_DIR = seed(tmp_path, [(CLIP, 60)])
+    assert admin.post(f"/api/clips/{CLIP}/share").status_code == 401
+
+
+def test_share_refuses_when_unpaired(admin, tmp_path):
+    receiver.EXPORTS_DIR = seed(tmp_path, [(CLIP, 60)])
+    receiver.CLOUD_URL = ""
+    resp = admin.post(f"/api/clips/{CLIP}/share", headers=auth())
+    assert resp.status_code == 409
+    assert "not paired" in resp.get_json()["error"]
+
+
+def test_share_queues_the_clip(admin, tmp_path):
+    receiver.EXPORTS_DIR = seed(tmp_path, [(CLIP, 60)])
+    pair_receiver()
+    receiver.uploads.config["exports_dir"] = receiver.EXPORTS_DIR
+    receiver.uploads.config["data_dir"] = str(tmp_path / "updata")
+
+    resp = admin.post(f"/api/clips/{CLIP}/share", headers=auth())
+    assert resp.status_code == 202
+    assert resp.get_json()["status"] == "queued"
+    assert receiver.uploads.state_for(CLIP)["status"] == "queued"
+    receiver.uploads.forget(CLIP)
+
+
+def test_share_rejects_a_missing_or_unsafe_file(admin, tmp_path):
+    receiver.EXPORTS_DIR = str(tmp_path)
+    pair_receiver()
+    assert admin.post("/api/clips/nope.mp4/share", headers=auth()).status_code == 404
+    assert admin.post("/api/clips/..%2Fetc.mp4/share", headers=auth()).status_code in (400, 404)
+
+
+def test_clip_list_carries_the_upload_state(admin, tmp_path):
+    receiver.EXPORTS_DIR = seed(tmp_path, [(CLIP, 60)])
+    receiver.uploads._set(CLIP, status="ready", share_url="https://noflagra.app/c/tok")
+    clips = admin.get("/api/clips").get_json()["clips"]
+    assert clips[0]["upload"] == "ready"
+    assert clips[0]["share_url"] == "https://noflagra.app/c/tok"
+    receiver.uploads.forget(CLIP)
+
+
+def test_deleting_a_clip_drops_it_from_the_queue(admin, tmp_path):
+    receiver.EXPORTS_DIR = seed(tmp_path, [(CLIP, 60)])
+    receiver.uploads._set(CLIP, status="queued")
+    assert admin.delete(f"/api/clips/{CLIP}", headers=auth()).status_code == 200
+    assert receiver.uploads.state_for(CLIP) is None
+
+
+def test_uploads_endpoint_reports_pairing(admin):
+    receiver.CLOUD_URL = ""
+    assert admin.get("/api/uploads").get_json()["paired"] is False

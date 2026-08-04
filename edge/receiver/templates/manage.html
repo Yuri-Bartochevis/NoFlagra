@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A0A0A">
+<title>NO FLAGRA &middot; Manage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:        #0A0A0A;
+    --panel:      #161616;
+    --panel-deep: #0D0D0D;
+    --edge:       #2A2A2A;
+    --edge-hi:    #3D3D3D;
+    --paper:      #F5F5F0;
+    --dim:        #8F8F8A;
+    --yellow:     #FFD400;
+    --yellow-hi:  #FFE666;
+    --yellow-lo:  #C79A00;
+    --ink-on-y:   #141210;
+    --rec:        #FF3B30;
+    --ok:         #3ECF8E;
+    --warn:       #FFA23B;
+
+    --display: "Anton", "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+    --body: "Inter", system-ui, -apple-system, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0; min-height: 100vh;
+    background: var(--ink);
+    background-image:
+      repeating-linear-gradient(90deg, rgba(255,255,255,.02) 0 1px, transparent 1px 48px),
+      repeating-linear-gradient(0deg, rgba(255,255,255,.02) 0 1px, transparent 1px 48px);
+    color: var(--paper);
+    font-family: var(--body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 20px 20px 80px; }
+
+  /* ---------- header ---------- */
+  header {
+    display: flex; align-items: center; gap: 14px;
+    padding-bottom: 18px; margin-bottom: 26px;
+    border-bottom: 1px solid var(--edge);
+  }
+  .mark { width: 38px; height: 38px; flex: none; }
+  .wordmark {
+    font-family: var(--display); font-weight: 400; font-size: 32px;
+    letter-spacing: .04em; text-transform: uppercase; line-height: 1;
+  }
+  .wordmark span { color: var(--yellow); }
+  .tagline {
+    font-size: 11px; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--dim); margin-top: 5px;
+  }
+  .backlink {
+    margin-left: auto; font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--dim); text-decoration: none; border: 1px solid var(--edge);
+    padding: 8px 14px; border-radius: 6px;
+  }
+  .backlink:hover { border-color: var(--yellow); color: var(--paper); }
+
+  h2 {
+    font-family: var(--display); font-weight: 400; font-size: 16px;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--dim);
+    margin: 0 0 16px; display: flex; align-items: baseline; gap: 10px;
+  }
+  h2 em { font-style: normal; font-family: var(--mono); font-size: 12px; color: #5A5A55; }
+
+  section { margin-bottom: 44px; }
+
+  .panel {
+    background: var(--panel); border: 1px solid var(--edge);
+    border-radius: 10px; padding: 20px;
+  }
+
+  /* ---------- unlock bar ---------- */
+  .lock {
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    background: var(--panel); border: 1px solid var(--edge);
+    border-left: 3px solid var(--yellow);
+    border-radius: 8px; padding: 14px 18px; margin-bottom: 30px;
+    font-size: 13px; color: var(--dim);
+  }
+  .lock.open { border-left-color: var(--ok); }
+  .lock strong { color: var(--paper); font-weight: 600; }
+  .lock input {
+    background: var(--panel-deep); border: 1px solid var(--edge); color: var(--paper);
+    padding: 9px 12px; border-radius: 6px; font-family: var(--mono);
+    font-size: 13px; min-width: 220px;
+  }
+  .lock input:focus { outline: 2px solid var(--yellow); outline-offset: 1px; }
+  .lock .spacer { flex: 1; }
+
+  button {
+    background: none; border: 1px solid var(--edge); color: var(--paper);
+    padding: 9px 16px; border-radius: 6px; cursor: pointer;
+    font-family: var(--display); font-weight: 400; letter-spacing: .06em;
+    text-transform: uppercase; font-size: 14px;
+  }
+  button:hover:not([disabled]) { border-color: var(--yellow); }
+  button[disabled] { opacity: .45; cursor: not-allowed; }
+  button.primary {
+    background: var(--yellow); border-color: var(--yellow); color: var(--ink-on-y);
+  }
+  button.primary:hover:not([disabled]) { background: var(--yellow-hi); }
+  button.danger { border-color: #4A2422; color: #FF6B62; }
+  button.danger:hover:not([disabled]) { border-color: var(--rec); color: var(--rec); }
+
+  /* ---------- storage ---------- */
+  .bar {
+    height: 30px; border-radius: 6px; overflow: hidden; display: flex;
+    background: var(--panel-deep); border: 1px solid var(--edge); margin-bottom: 12px;
+  }
+  .bar i { display: block; height: 100%; }
+  .bar .buffer { background: linear-gradient(180deg, #3D3D3D, #2A2A2A); }
+  .bar .saved  { background: linear-gradient(180deg, var(--yellow), var(--yellow-lo)); }
+  .bar .other  { background: #232323; }
+
+  .legend { display: flex; gap: 20px; flex-wrap: wrap; font-size: 13px; color: var(--dim); }
+  .legend span { display: flex; align-items: center; gap: 7px; }
+  .legend i { width: 11px; height: 11px; border-radius: 3px; display: block; }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1px; background: var(--edge); border: 1px solid var(--edge);
+    border-radius: 8px; overflow: hidden; margin-top: 20px;
+  }
+  .stat { background: var(--panel); padding: 15px 16px; }
+  .stat b {
+    display: block; font-family: var(--display); font-weight: 400;
+    font-size: 26px; line-height: 1.1; color: var(--paper);
+  }
+  .stat b.thin { font-family: var(--body); font-size: 17px; font-weight: 600; }
+  .stat small {
+    display: block; margin-top: 5px; font-size: 11px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--dim);
+  }
+
+  table.days { width: 100%; border-collapse: collapse; margin-top: 22px; font-size: 14px; }
+  table.days th {
+    text-align: left; font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--dim); font-weight: 500; padding: 0 12px 9px 0; border-bottom: 1px solid var(--edge);
+  }
+  table.days td { padding: 10px 12px 10px 0; border-bottom: 1px solid #1E1E1E; }
+  table.days td.num { font-family: var(--mono); }
+  table.days tr.now td { color: var(--yellow); }
+  table.days .yes { color: var(--ok); }
+  table.days .no { color: #6B4A48; }
+
+  .hint { margin-top: 14px; font-size: 13px; color: var(--dim); line-height: 1.6; }
+  .hint code {
+    font-family: var(--mono); font-size: 12px; background: var(--panel-deep);
+    border: 1px solid var(--edge); border-radius: 4px; padding: 1px 6px;
+  }
+
+  /* ---------- settings ---------- */
+  .fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 22px; }
+  .field label {
+    display: block; font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--dim); margin-bottom: 9px;
+  }
+  .field .row { display: flex; align-items: center; gap: 9px; }
+  .field input[type=number] {
+    background: var(--panel-deep); border: 1px solid var(--edge); color: var(--paper);
+    padding: 10px 12px; border-radius: 6px; font-family: var(--mono);
+    font-size: 15px; width: 100px;
+  }
+  .field input:focus { outline: 2px solid var(--yellow); outline-offset: 1px; }
+  .field .unit { font-size: 13px; color: var(--dim); }
+  .field .said { margin-top: 8px; font-size: 12px; color: #5A5A55; min-height: 1.2em; }
+  .field.locked input { opacity: .5; }
+
+  .presets { display: flex; gap: 7px; margin-top: 10px; flex-wrap: wrap; }
+  .presets button { padding: 5px 11px; font-size: 12px; }
+  .presets button.on { border-color: var(--yellow); color: var(--yellow); }
+
+  .actions {
+    display: flex; gap: 10px; align-items: center;
+    margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--edge);
+  }
+  .actions .note { font-size: 13px; color: var(--dim); }
+
+  .readonly {
+    margin-top: 20px; padding: 14px 16px; border-radius: 8px;
+    background: var(--panel-deep); border: 1px solid var(--edge);
+    font-size: 13px; color: var(--dim); line-height: 1.6;
+  }
+  .readonly b { color: var(--paper); font-weight: 600; }
+
+  /* ---------- clips ---------- */
+  .toolbar {
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 18px;
+  }
+  .toolbar .count { font-size: 13px; color: var(--dim); margin-left: auto; }
+
+  .daygroup { margin-bottom: 28px; }
+  .dayhead { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+  .dayhead b { font-family: var(--display); font-weight: 400; font-size: 20px; }
+  .dayhead .rule { flex: 1; height: 1px; background: var(--edge); }
+  .dayhead .tally { font-family: var(--mono); font-size: 12px; color: var(--dim); }
+
+  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+  .card {
+    position: relative; background: var(--panel); border: 1px solid var(--edge);
+    border-radius: 10px; overflow: hidden; transition: border-color .18s ease;
+  }
+  .card:hover { border-color: var(--edge-hi); }
+  .card.picked { border-color: var(--yellow); }
+  .card.keeping { border-color: var(--yellow-lo); }
+  .card.going { opacity: .35; pointer-events: none; }
+
+  .card .shot {
+    position: relative; display: block; aspect-ratio: 16/9; background: var(--panel-deep);
+    /* it's an <a>, so say so — otherwise the timestamp inherits link blue */
+    color: var(--paper); text-decoration: none;
+  }
+  .card .shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card .shot .pending {
+    position: absolute; inset: 0; display: grid; place-content: center;
+    color: #4A4A45; font-family: var(--mono); font-size: 11px; letter-spacing: .1em;
+  }
+  .card .shot .stamp {
+    position: absolute; right: 8px; bottom: 8px; background: rgba(10,10,10,.8);
+    padding: 3px 7px; border-radius: 4px; font-family: var(--mono); font-size: 12px;
+  }
+  .card .tick {
+    position: absolute; top: 9px; left: 9px; width: 24px; height: 24px;
+    border-radius: 5px; border: 1px solid var(--edge-hi); background: rgba(10,10,10,.75);
+    display: grid; place-items: center; cursor: pointer; z-index: 2;
+    font-size: 14px; color: transparent; line-height: 1;
+  }
+  .card.picked .tick { background: var(--yellow); border-color: var(--yellow); color: var(--ink-on-y); }
+  .card .pin {
+    position: absolute; top: 9px; right: 9px; z-index: 2;
+    background: rgba(10,10,10,.75); border: 1px solid var(--edge-hi);
+    width: 24px; height: 24px; border-radius: 5px; padding: 0;
+    display: grid; place-items: center; font-size: 12px; cursor: pointer;
+  }
+  .card.keeping .pin { background: var(--yellow-lo); border-color: var(--yellow); }
+
+  /* upload state — a thin band above the footer, only when relevant */
+  .card .band {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px; border-top: 1px solid var(--edge);
+    font-size: 12px;
+  }
+  .card .band.queued  { color: var(--dim); }
+  .card .band.uploading { color: var(--yellow); }
+  .card .band.ready   { color: var(--ok); }
+  .card .band.failed, .card .band.retry { color: #FF6B62; }
+  .card .band .grow { flex: 1; }
+  .card .band .prog {
+    flex: 1; height: 4px; border-radius: 2px; background: var(--panel-deep);
+    overflow: hidden;
+  }
+  .card .band .prog i { display: block; height: 100%; background: var(--yellow); }
+  .card .band button {
+    padding: 3px 9px; font-size: 11px; border-radius: 4px;
+  }
+  .card.shared { border-color: #2C6B4F; }
+
+  .card .foot {
+    display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+    border-top: 1px solid var(--edge);
+  }
+  .card .foot .share {
+    font-family: var(--display); font-size: 12px; letter-spacing: .06em;
+    text-transform: uppercase; padding: 4px 9px; border-radius: 4px;
+    border: 1px solid var(--edge); color: var(--dim); background: none; cursor: pointer;
+  }
+  .card .foot .share:hover { border-color: var(--yellow); color: var(--yellow); }
+
+  .unpaired {
+    margin-bottom: 18px; padding: 13px 16px; border-radius: 8px;
+    background: var(--panel); border: 1px solid var(--edge);
+    border-left: 3px solid var(--warn);
+    font-size: 13px; color: var(--dim); line-height: 1.6;
+  }
+  .unpaired b { color: var(--paper); font-weight: 600; }
+  .unpaired code {
+    font-family: var(--mono); font-size: 12px; background: var(--panel-deep);
+    border: 1px solid var(--edge); border-radius: 4px; padding: 1px 6px;
+  }
+  .card .foot .meta {
+    font-size: 12px; color: var(--dim); flex: 1;
+    /* the size can wrap, but it must not shove the actions off the card */
+    min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .card .foot a {
+    font-family: var(--display); font-size: 12px; letter-spacing: .06em;
+    text-transform: uppercase; text-decoration: none; color: var(--dim);
+    padding: 4px 9px; border-radius: 4px; border: 1px solid transparent;
+  }
+  .card .foot a:hover { color: var(--yellow); border-color: var(--edge); }
+
+  .more {
+    display: block; width: 100%; margin-top: 8px; padding: 14px;
+    background: none; border: 1px dashed var(--edge); border-radius: 8px; color: var(--dim);
+  }
+  .more:hover { border-color: var(--yellow); color: var(--paper); }
+
+  .empty {
+    padding: 40px 20px; text-align: center; color: var(--dim); font-size: 14px;
+    border: 1px dashed var(--edge); border-radius: 8px;
+  }
+
+  #toast {
+    position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 90px);
+    background: var(--panel); border: 1px solid var(--edge); border-left: 3px solid var(--yellow);
+    padding: 13px 20px; border-radius: 8px; font-size: 14px;
+    box-shadow: 0 12px 32px rgba(0,0,0,.6);
+    transition: transform .28s cubic-bezier(.2,.8,.3,1); z-index: 40; max-width: 90vw;
+  }
+  #toast.up { transform: translate(-50%, 0); }
+  #toast.bad { border-left-color: var(--rec); }
+
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <svg class="mark" viewBox="0 0 40 40" aria-hidden="true">
+      <rect x="1.5" y="1.5" width="37" height="37" rx="9" fill="#161616" stroke="#2A2A2A"/>
+      <path d="M21.5 7 L11 22.5 H18.5 L17 33 L29 16.5 H21 Z" fill="#FFD400"/>
+    </svg>
+    <div>
+      <div class="wordmark">No <span>Flagra</span></div>
+      <div class="tagline">{{ camera }} &middot; manage</div>
+    </div>
+    <a class="backlink" href="/">&larr; Mat view</a>
+  </header>
+
+  <div class="lock" id="lock">
+    <strong id="lockTitle">Locked</strong>
+    <span id="lockWhy">Enter the admin password to change settings or delete clips.</span>
+    <input id="pw" type="password" placeholder="admin password" autocomplete="current-password">
+    <button id="unlock">Unlock</button>
+    <span class="spacer"></span>
+    <button id="forget" hidden>Forget</button>
+  </div>
+
+  <!-- ---------------- storage ---------------- -->
+  <section>
+    <h2>Storage <em id="diskSummary"></em></h2>
+    <div class="panel">
+      <div class="bar" id="bar" title="Disk usage">
+        <i class="buffer" style="width:0"></i>
+        <i class="saved" style="width:0"></i>
+        <i class="other" style="width:0"></i>
+      </div>
+      <div class="legend">
+        <span><i style="background:#3D3D3D"></i> Recording buffer <b id="lgBuffer">&mdash;</b></span>
+        <span><i style="background:#FFD400"></i> Saved clips <b id="lgClips">&mdash;</b></span>
+        <span><i style="background:#232323"></i> Everything else <b id="lgOther">&mdash;</b></span>
+        <span style="margin-left:auto"><b id="lgFree">&mdash;</b> free</span>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><b id="stRate">&mdash;</b><small>per day of footage</small></div>
+        <div class="stat"><b id="stMax">&mdash;</b><small>max buffer retention</small></div>
+        <div class="stat"><b id="stClips">&mdash;</b><small>saved clips</small></div>
+        <div class="stat"><b class="thin" id="stKept">&mdash;</b><small>marked keep</small></div>
+      </div>
+
+      <table class="days" id="daysTable" hidden>
+        <thead><tr><th>Buffer retention</th><th>Disk needed</th><th>Fits today</th></tr></thead>
+        <tbody id="daysBody"></tbody>
+      </table>
+
+      <div class="hint" id="storageHint"></div>
+    </div>
+  </section>
+
+  <!-- ---------------- settings ---------------- -->
+  <section>
+    <h2>Clip window <em>applies to the next press</em></h2>
+    <div class="panel">
+      <div class="fields">
+        <div class="field" id="fLookback">
+          <label for="lookback">How far back a press reaches</label>
+          <div class="row">
+            <input id="lookback" type="number" min="30" max="3600" step="10" disabled>
+            <span class="unit">seconds</span>
+          </div>
+          <div class="said" id="lookbackSaid"></div>
+          <div class="presets" id="lookbackPresets"></div>
+        </div>
+
+        <div class="field" id="fPostRoll">
+          <label for="postroll">Kept after the press</label>
+          <div class="row">
+            <input id="postroll" type="number" min="0" max="300" step="5" disabled>
+            <span class="unit">seconds</span>
+          </div>
+          <div class="said">Also how long the receiver waits before cutting, so the last segments have reached disk.</div>
+        </div>
+
+        <div class="field" id="fCooldown">
+          <label for="cooldown">Ignore repeat presses for</label>
+          <div class="row">
+            <input id="cooldown" type="number" min="0" max="3600" step="5" disabled>
+            <span class="unit">seconds</span>
+          </div>
+          <div class="said">Stops bounce and someone leaning on the button.</div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="primary" id="saveSettings" disabled>Save</button>
+        <button id="revertSettings" disabled>Revert</button>
+        <span class="note" id="settingsNote"></span>
+      </div>
+
+      <div class="readonly">
+        <b>Recording retention is {{ retention_days }} days</b>, set in Frigate, not here.
+        Change <code>record.continuous.days</code> in <code>edge/frigate/config.yml</code>
+        and restart Frigate. The table above shows what your disk can actually support.
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------------- clips ---------------- -->
+  <section>
+    <h2>Saved clips <em id="clipCount"></em></h2>
+    <div class="unpaired" id="unpaired" hidden>
+      <b>This Pi isn't paired with a cloud account.</b>
+      Clips stay on this disk and the share button is off. Pair it with
+      <code>python3 tools/pair_device.py &lt;cloud-url&gt; &lt;code&gt; &lt;camera&gt;</code>.
+    </div>
+    <div class="toolbar">
+      <button id="pickAll">Select all</button>
+      <button id="pickNone" hidden>Clear</button>
+      <button class="danger" id="deletePicked" hidden disabled>Delete selected</button>
+      <span class="count" id="pickedCount"></span>
+    </div>
+    <div id="clipList"><div class="empty">Loading&hellip;</div></div>
+    <button class="more" id="more" hidden>Load older clips</button>
+  </section>
+
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const PAGE = {{ page_size }};
+const $ = s => document.querySelector(s);
+
+let pw = sessionStorage.getItem('noflagra_admin') || '';
+let limits = {};
+let saved = {};       // what the server currently has
+let loaded = [];      // clips fetched so far
+let offset = 0, hasMore = false;
+let picked = new Set();
+let paired = false;   // is this Pi linked to a cloud account
+let uploadNow = null; // the clip currently going up, for the progress bar
+let pollTimer = null;
+
+function toast(msg, bad) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.toggle('bad', !!bad);
+  t.classList.add('up');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('up'), 4200);
+}
+
+function admin(extra) {
+  return Object.assign({ 'X-Admin-Token': pw }, extra || {});
+}
+
+/* ---------- lock ---------- */
+function paintLock() {
+  const open = !!pw;
+  $('#lock').classList.toggle('open', open);
+  $('#lockTitle').textContent = open ? 'Unlocked' : 'Locked';
+  $('#lockWhy').textContent = open
+    ? 'Settings and deletion are enabled on this device for this browser session.'
+    : 'Enter the admin password to change settings or delete clips.';
+  $('#pw').hidden = open;
+  $('#unlock').hidden = open;
+  $('#forget').hidden = !open;
+
+  ['lookback', 'postroll', 'cooldown'].forEach(id => { $('#' + id).disabled = !open; });
+  document.querySelectorAll('.field').forEach(f => f.classList.toggle('locked', !open));
+  $('#pickAll').hidden = !open;
+  $('#deletePicked').hidden = !open;
+  $('#pickNone').hidden = !open || !picked.size;
+  markDirty();
+  render();
+}
+
+$('#unlock').onclick = async () => {
+  const value = $('#pw').value.trim();
+  if (!value) { toast('Type the password first', true); return; }
+  // Prove it before storing: a POST of the settings we already have is a
+  // no-op that still exercises the password check.
+  try {
+    const r = await fetch('/api/settings', {
+      method: 'POST',
+      headers: admin({ 'X-Admin-Token': value, 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ cooldown_seconds: saved.cooldown_seconds })
+    });
+    if (r.status === 401) { toast('Wrong password', true); return; }
+    if (!r.ok) { toast('Receiver refused: ' + r.status, true); return; }
+    pw = value;
+    sessionStorage.setItem('noflagra_admin', pw);
+    $('#pw').value = '';
+    paintLock();
+    toast('Unlocked');
+  } catch { toast('Cannot reach the receiver', true); }
+};
+
+$('#forget').onclick = () => {
+  pw = '';
+  sessionStorage.removeItem('noflagra_admin');
+  picked.clear();
+  paintLock();
+  toast('Locked again');
+};
+
+/* ---------- storage ---------- */
+function human(gb) {
+  if (gb >= 1000) return (gb / 1000).toFixed(2) + ' TB';
+  if (gb >= 1) return gb.toFixed(1) + ' GB';
+  return Math.round(gb * 1024) + ' MB';
+}
+
+async function loadStorage() {
+  let s;
+  try {
+    const r = await fetch('/api/storage');
+    s = await r.json();
+    if (!r.ok) throw new Error(s.error || 'failed');
+  } catch (e) {
+    $('#storageHint').textContent = 'Cannot read the storage volume.';
+    return;
+  }
+
+  const d = s.disk;
+  $('#diskSummary').textContent = human(d.used_gb) + ' of ' + human(d.total_gb) + ' used';
+
+  const pct = v => Math.max(0, Math.min(100, d.total_gb ? v / d.total_gb * 100 : 0));
+  const other = Math.max(0, d.used_gb - s.recordings.gb - s.clips.gb);
+  const bar = $('#bar');
+  bar.children[0].style.width = pct(s.recordings.gb) + '%';
+  bar.children[1].style.width = pct(s.clips.gb) + '%';
+  bar.children[2].style.width = pct(other) + '%';
+
+  $('#lgBuffer').textContent = human(s.recordings.gb);
+  $('#lgClips').textContent = human(s.clips.gb);
+  $('#lgOther').textContent = human(other);
+  $('#lgFree').textContent = human(d.free_gb);
+
+  $('#stClips').textContent = s.clips.files;
+  $('#stKept').textContent = s.clips.kept + (s.clips.kept === 1 ? ' clip' : ' clips');
+
+  if (s.rate) {
+    $('#stRate').textContent = human(s.rate.gb_per_day);
+    $('#stMax').textContent = s.projection.max_retention_days + ' days';
+
+    const rows = s.projection.options.map(o => {
+      const now = o.days === s.recordings.retention_days;
+      return '<tr class="' + (now ? 'now' : '') + '">' +
+        '<td>' + o.days + (o.days === 1 ? ' day' : ' days') + (now ? ' &middot; current' : '') + '</td>' +
+        '<td class="num">' + human(o.gb) + '</td>' +
+        '<td class="' + (o.fits ? 'yes' : 'no') + '">' + (o.fits ? 'yes' : 'no room') + '</td>' +
+      '</tr>';
+    }).join('');
+    $('#daysBody').innerHTML = rows;
+    $('#daysTable').hidden = false;
+
+    $('#storageHint').innerHTML =
+      'Measured from the hour of ' + s.rate.sampled_hour + ' &mdash; about ' +
+      s.rate.mbps + ' Mbps from this camera. "Fits today" counts free space plus ' +
+      'what the buffer already holds. Saved clips are not on this clock: they stay ' +
+      'until you delete them, which is the point.';
+  } else {
+    $('#stRate').textContent = '—';
+    $('#stMax').textContent = '—';
+    $('#storageHint').textContent = s.note || '';
+  }
+}
+
+/* ---------- settings ---------- */
+function describe(seconds) {
+  if (seconds >= 120) {
+    const m = seconds / 60;
+    return 'A press saves the last ' + (Number.isInteger(m) ? m : m.toFixed(1)) + ' minutes.';
+  }
+  return 'A press saves the last ' + seconds + ' seconds.';
+}
+
+function currentForm() {
+  return {
+    lookback_seconds: parseInt($('#lookback').value, 10),
+    post_roll_seconds: parseInt($('#postroll').value, 10),
+    cooldown_seconds: parseInt($('#cooldown').value, 10)
+  };
+}
+
+function markDirty() {
+  const form = currentForm();
+  const dirty = Object.keys(saved).some(k => form[k] !== saved[k]);
+  const valid = Object.values(form).every(v => Number.isFinite(v));
+  $('#saveSettings').disabled = !pw || !dirty || !valid;
+  $('#revertSettings').disabled = !dirty;
+  $('#settingsNote').textContent = !pw
+    ? 'Unlock to edit.'
+    : dirty ? 'Unsaved changes.' : 'Saved.';
+
+  $('#lookbackSaid').textContent = Number.isFinite(form.lookback_seconds)
+    ? describe(form.lookback_seconds) : '';
+  document.querySelectorAll('#lookbackPresets button').forEach(b => {
+    b.classList.toggle('on', +b.dataset.secs === form.lookback_seconds);
+  });
+}
+
+function fillForm(s) {
+  $('#lookback').value = s.lookback_seconds;
+  $('#postroll').value = s.post_roll_seconds;
+  $('#cooldown').value = s.cooldown_seconds;
+  markDirty();
+}
+
+async function loadSettings() {
+  try {
+    const r = await fetch('/api/settings');
+    const j = await r.json();
+    limits = j.limits;
+    saved = j.settings;
+    ['lookback:lookback_seconds', 'postroll:post_roll_seconds', 'cooldown:cooldown_seconds']
+      .forEach(pair => {
+        const [id, key] = pair.split(':');
+        if (limits[key]) { $('#' + id).min = limits[key].min; $('#' + id).max = limits[key].max; }
+      });
+    fillForm(saved);
+  } catch { toast('Cannot read settings', true); }
+}
+
+$('#lookbackPresets').innerHTML = [60, 180, 300, 600, 900, 1800]
+  .map(s => '<button data-secs="' + s + '">' + (s < 60 ? s + 's' : (s / 60) + ' min') + '</button>')
+  .join('');
+$('#lookbackPresets').onclick = e => {
+  const b = e.target.closest('button');
+  if (!b || !pw) return;
+  $('#lookback').value = b.dataset.secs;
+  markDirty();
+};
+
+['lookback', 'postroll', 'cooldown'].forEach(id => { $('#' + id).oninput = markDirty; });
+
+$('#revertSettings').onclick = () => fillForm(saved);
+
+$('#saveSettings').onclick = async () => {
+  const form = currentForm();
+  $('#saveSettings').disabled = true;
+  try {
+    const r = await fetch('/api/settings', {
+      method: 'POST',
+      headers: admin({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(form)
+    });
+    const j = await r.json();
+    if (r.status === 401) { toast('Password rejected — unlock again', true); pw = ''; sessionStorage.removeItem('noflagra_admin'); paintLock(); return; }
+    if (!r.ok) { toast(j.error || 'Rejected', true); markDirty(); return; }
+    saved = j.settings;
+    fillForm(saved);
+    toast('Saved — takes effect on the next press');
+  } catch {
+    toast('Cannot reach the receiver', true);
+    markDirty();
+  }
+};
+
+/* ---------- clips ---------- */
+async function fetchClips(reset) {
+  if (reset) { loaded = []; offset = 0; }
+  try {
+    const r = await fetch('/api/clips?limit=' + PAGE + '&offset=' + offset);
+    const data = await r.json();
+    const seen = new Set(loaded.map(c => c.file));
+    data.clips.forEach(c => { if (!seen.has(c.file)) loaded.push(c); });
+    offset = loaded.length;
+    hasMore = data.has_more;
+    $('#clipCount').textContent = data.total
+      ? data.total + (data.total_gb >= 0.1 ? ' · ' + data.total_gb + ' GB' : '')
+      : '';
+    render();
+  } catch {
+    $('#clipList').innerHTML = '<div class="empty">Cannot read the clips folder.</div>';
+  }
+}
+
+function bandFor(c) {
+  const state = c.upload;
+
+  // Never uploaded: offer to. Everything upload-related lives on this row,
+  // so the footer below stays "when, how big, watch, save" at any width.
+  if (!state) {
+    if (!pw || !paired) return '';
+    return '<div class="band queued">' +
+      '<span class="grow">On this Pi only</span>' +
+      '<button data-act="share" title="Upload the original and get a public link">Share</button>' +
+      '</div>';
+  }
+
+  if (state === 'uploading') {
+    const live = uploadNow && uploadNow.file === c.file ? uploadNow : null;
+    const pct = live && live.bytes ? Math.round(live.sent / live.bytes * 100) : 0;
+    return '<div class="band uploading">' +
+      '<span>Uploading ' + pct + '%</span>' +
+      '<span class="prog"><i style="width:' + pct + '%"></i></span></div>';
+  }
+  if (state === 'ready') {
+    return '<div class="band ready">' +
+      '<span class="grow">Shared</span>' +
+      '<button data-act="copy" title="Copy the public link">Copy link</button>' +
+      '<button data-act="open">Open</button></div>';
+  }
+  if (state === 'queued') {
+    return '<div class="band queued"><span class="grow">Waiting to upload</span></div>';
+  }
+  if (state === 'retry' || state === 'failed') {
+    const label = state === 'retry' ? 'Upload failed — will retry' : 'Upload failed';
+    return '<div class="band ' + state + '">' +
+      '<span class="grow" title="' + (c.upload_error || '').replace(/"/g, '&quot;') + '">' +
+      label + '</span>' +
+      '<button data-act="share">Retry</button></div>';
+  }
+  return '';
+}
+
+function render() {
+  const list = $('#clipList');
+  if (!loaded.length) {
+    list.innerHTML = '<div class="empty">No clips yet.</div>';
+    $('#more').hidden = true;
+    return;
+  }
+
+  const groups = [];
+  loaded.forEach(c => {
+    const last = groups[groups.length - 1];
+    if (last && last.day === c.day) last.clips.push(c);
+    else groups.push({ day: c.day, clips: [c] });
+  });
+
+  list.innerHTML = groups.map(g => {
+    const cards = g.clips.map(c => {
+      const url = '/clips/' + encodeURIComponent(c.file);
+      const cls = ['card'];
+      if (picked.has(c.file)) cls.push('picked');
+      if (c.kept) cls.push('keeping');
+      if (c.upload === 'ready') cls.push('shared');
+      return '<div class="' + cls.join(' ') + '" data-file="' + encodeURIComponent(c.file) + '">' +
+        (pw ? '<div class="tick" data-act="pick" title="Select">✓</div>' +
+              '<button class="pin" data-act="keep" title="' +
+              (c.kept ? 'Marked keep — click to unmark' : 'Mark keep (protects from delete)') +
+              '">' + (c.kept ? '★' : '☆') + '</button>' : '') +
+        '<a class="shot" href="' + url + '" target="_blank">' +
+          '<span class="pending">preview</span>' +
+          '<img loading="lazy" src="' + c.thumb + '" alt="" ' +
+               'onload="this.previousElementSibling.style.display=\'none\'" onerror="this.remove()">' +
+          '<span class="stamp">' + c.time + '</span>' +
+        '</a>' +
+        bandFor(c) +
+        '<div class="foot">' +
+          '<span class="meta">' + c.ago + ' · ' + c.size_mb + ' MB</span>' +
+          '<a href="' + url + '" target="_blank">Watch</a>' +
+          '<a href="' + url + '?dl=1">Save</a>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    return '<div class="daygroup"><div class="dayhead"><b>' + g.day + '</b>' +
+      '<span class="rule"></span><span class="tally">' + g.clips.length + '</span></div>' +
+      '<div class="grid">' + cards + '</div></div>';
+  }).join('');
+
+  $('#more').hidden = !hasMore;
+  paintPicked();
+}
+
+function paintPicked() {
+  const n = picked.size;
+  $('#pickedCount').textContent = n ? n + ' selected' : '';
+  $('#deletePicked').disabled = !n;
+  $('#deletePicked').textContent = n > 1 ? 'Delete ' + n + ' clips' : 'Delete selected';
+  $('#pickNone').hidden = !pw || !n;
+}
+
+/* ---------- uploads ---------- */
+async function loadUploads() {
+  try {
+    const r = await fetch('/api/uploads');
+    const j = await r.json();
+    paired = j.paired;
+    uploadNow = j.current;
+    $('#unpaired').hidden = paired;
+
+    // Fold the queue's view of each clip back into the list we're showing.
+    let changed = false;
+    loaded.forEach(c => {
+      const rec = j.clips[c.file];
+      const status = rec ? rec.status : null;
+      const link = rec ? rec.share_url : null;
+      const err = rec ? rec.error : null;
+      if (c.upload !== status || c.share_url !== link || c.upload_error !== err) {
+        c.upload = status; c.share_url = link; c.upload_error = err;
+        changed = true;
+      }
+    });
+    if (changed || uploadNow) render();
+
+    // Poll hard only while something is actually moving.
+    const busy = uploadNow || Object.values(j.clips)
+      .some(r => r.status === 'queued' || r.status === 'uploading');
+    clearTimeout(pollTimer);
+    pollTimer = setTimeout(loadUploads, busy ? 1500 : 15000);
+  } catch {
+    clearTimeout(pollTimer);
+    pollTimer = setTimeout(loadUploads, 15000);
+  }
+}
+
+async function shareClip(file) {
+  try {
+    const r = await fetch('/api/clips/' + encodeURIComponent(file) + '/share', {
+      method: 'POST', headers: admin()
+    });
+    const j = await r.json();
+    if (r.status === 401) { toast('Password rejected — unlock again', true); pw = ''; sessionStorage.removeItem('noflagra_admin'); paintLock(); return; }
+    if (r.status === 409) { toast(j.error, true); return; }
+    if (!r.ok) { toast(j.error || 'Could not queue the upload', true); return; }
+    const clip = loaded.find(c => c.file === file);
+    if (clip) { clip.upload = 'queued'; clip.upload_error = null; }
+    render();
+    loadUploads();
+    toast('Queued — uploading the original, this takes a few minutes');
+  } catch { toast('Cannot reach the receiver', true); }
+}
+
+async function copyLink(file) {
+  const clip = loaded.find(c => c.file === file);
+  if (!clip || !clip.share_url) return;
+  try {
+    await navigator.clipboard.writeText(clip.share_url);
+    toast('Link copied — anyone with it can watch');
+  } catch {
+    // clipboard needs https or localhost; show it so it can be copied by hand
+    prompt('Copy this link:', clip.share_url);
+  }
+}
+
+$('#clipList').onclick = async e => {
+  const act = e.target.closest('[data-act]');
+  if (!act) return;
+  e.preventDefault();
+  const card = act.closest('.card');
+  const file = decodeURIComponent(card.dataset.file);
+
+  if (act.dataset.act === 'pick') {
+    picked.has(file) ? picked.delete(file) : picked.add(file);
+    card.classList.toggle('picked', picked.has(file));
+    paintPicked();
+    return;
+  }
+  if (act.dataset.act === 'share') return shareClip(file);
+  if (act.dataset.act === 'copy') return copyLink(file);
+  if (act.dataset.act === 'open') {
+    const clip = loaded.find(c => c.file === file);
+    if (clip && clip.share_url) window.open(clip.share_url, '_blank');
+    return;
+  }
+
+  const clip = loaded.find(c => c.file === file);
+  const next = !(clip && clip.kept);
+  try {
+    const r = await fetch('/api/clips/' + encodeURIComponent(file) + '/keep', {
+      method: 'POST',
+      headers: admin({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ keep: next })
+    });
+    if (!r.ok) { toast('Could not change keep', true); return; }
+    if (clip) clip.kept = next;
+    render();
+    loadStorage();
+    toast(next ? 'Marked keep — delete is blocked' : 'Keep removed');
+  } catch { toast('Cannot reach the receiver', true); }
+};
+
+$('#pickAll').onclick = () => { loaded.forEach(c => picked.add(c.file)); render(); };
+$('#pickNone').onclick = () => { picked.clear(); render(); };
+
+$('#deletePicked').onclick = async () => {
+  const files = [...picked];
+  if (!files.length) return;
+  const kept = loaded.filter(c => picked.has(c.file) && c.kept).length;
+  let msg = 'Delete ' + files.length + (files.length === 1 ? ' clip' : ' clips') + ' for good?';
+  if (kept) msg += '\n\n' + kept + ' of them ' + (kept === 1 ? 'is' : 'are') +
+    ' marked keep and will be skipped.';
+  if (!confirm(msg)) return;
+
+  $('#deletePicked').disabled = true;
+  let gone = 0, failed = 0, skipped = 0;
+
+  for (const file of files) {
+    const card = $('.card[data-file="' + encodeURIComponent(file) + '"]');
+    try {
+      const r = await fetch('/api/clips/' + encodeURIComponent(file), {
+        method: 'DELETE', headers: admin()
+      });
+      if (r.status === 409) { skipped++; continue; }
+      if (r.status === 401) { toast('Password rejected — unlock again', true); pw = ''; sessionStorage.removeItem('noflagra_admin'); paintLock(); return; }
+      if (!r.ok) { failed++; continue; }
+      gone++;
+      if (card) card.classList.add('going');
+      loaded = loaded.filter(c => c.file !== file);
+      picked.delete(file);
+    } catch { failed++; }
+  }
+
+  offset = loaded.length;
+  render();
+  loadStorage();
+
+  const parts = [gone + ' deleted'];
+  if (skipped) parts.push(skipped + ' kept');
+  if (failed) parts.push(failed + ' failed');
+  toast(parts.join(' · '), !!failed);
+};
+
+$('#more').onclick = () => fetchClips(false);
+
+/* ---------- go ---------- */
+loadSettings().then(paintLock);
+loadStorage();
+fetchClips(true).then(loadUploads);
+setInterval(loadStorage, 60000);
+</script>
+</body>
+</html>

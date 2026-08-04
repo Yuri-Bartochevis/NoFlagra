@@ -168,10 +168,22 @@ class Clip(db.Model):
     duration_seconds = db.Column(db.Integer, nullable=False)
     size_bytes = db.Column(db.BigInteger, nullable=False)
     status = db.Column(db.String(32), nullable=False, default="pending")  # pending|uploading|ready|failed
+    # Why the last upload failed, so the Pi's manage page can say something
+    # more useful than "failed". Cleared on the next successful attempt.
+    upload_error = db.Column(db.String(255), nullable=True)
+    # Random, not the row id: a share link is public, and sequential ids would
+    # let anyone walk every clip every gym has ever shared. Null until the
+    # clip is actually shared — uploading and sharing are separate steps.
+    share_token = db.Column(db.String(64), nullable=True, unique=True)
+    shared_at = db.Column(db.DateTime(timezone=True), nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=_now)
 
     establishment = db.relationship("Establishment", back_populates="clips")
     camera = db.relationship("Camera", back_populates="clips")
+
+    @property
+    def is_shared(self):
+        return bool(self.share_token and self.status == "ready")
 
 
 def _slugify(name: str) -> str:
@@ -196,6 +208,11 @@ def make_camera_slug(name: str) -> str:
 
 def generate_invite_token() -> str:
     return secrets.token_urlsafe(32)
+
+
+def generate_share_token() -> str:
+    """Public, unguessable, and short enough to paste into WhatsApp."""
+    return secrets.token_urlsafe(16)
 
 
 def hash_invite_token(token: str) -> str:

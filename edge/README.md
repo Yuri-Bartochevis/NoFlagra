@@ -58,6 +58,7 @@ Two consequences worth remembering:
 | `tools/mock_frigate.py` | Pretends to be Frigate, for testing the receiver alone |
 | `firmware/button_trigger.ino` | The ESP32 sketch |
 | `storage/` | Created automatically. Recordings and exported clips live here |
+| `data/` | Created automatically. Settings saved from the manage page, and the keep-list |
 
 ---
 
@@ -209,6 +210,87 @@ them. Tune with `THUMB_OFFSET_SECONDS` and `PAGE_SIZE` in `docker-compose.yml`.
 
 ---
 
+## The manage page (`/manage`)
+
+Everything that changes or destroys something lives on its own page, so the
+mat view stays a thing anyone at the gym can safely poke at. Open
+`http://<pi-ip>:5001/manage`.
+
+It's read-only until you enter the admin password, which is `ADMIN_PASSWORD`
+in `.env` — or, if you haven't set one, the button key. **Set one.** The button
+key is compiled into the ESP32 firmware, so anyone who can read a chip off the
+wall would otherwise be able to delete footage. The password is held in
+`sessionStorage`, so it's forgotten when the tab closes.
+
+### Storage
+
+The top panel is measured, not estimated. It samples the most recent complete
+hour of recording segments and scales it to a day, which gives the true rate
+for *your* camera at *your* bitrate — no guessing from the resolution. From
+that it works out how many days of continuous buffer your disk can hold, and
+shows a table of 1 / 2 / 3 / 7 / 14 / 30 days with what each would cost and
+whether it fits today.
+
+Two clocks worth keeping straight:
+
+- **The recording buffer** is on a timer. Frigate deletes it after
+  `record.continuous.days`, and that's the number the projection is about.
+- **Saved clips are not.** They stay until someone deletes them. That's the
+  point of the product — but it does mean the clips folder only ever grows,
+  so keep an eye on the yellow band in the bar.
+
+### Clip window
+
+Lookback, post-roll and cooldown are editable here and take effect on the
+**next press** — no container restart. Saved values go to `data/settings.json`,
+which from then on wins over the `*_SECONDS` defaults in `docker-compose.yml`.
+A corrupt or out-of-range settings file is ignored with a log line rather than
+being fatal; the gym keeps recording.
+
+Recording retention is deliberately *not* editable here — it belongs to
+Frigate. Change `record.continuous.days` in `frigate/config.yml`, restart
+Frigate, and update `FRIGATE_RETENTION_DAYS` in `docker-compose.yml` so the
+manage page keeps telling the truth.
+
+### Sharing a clip
+
+**Share** uploads that clip's original file to the cloud and gives you a public
+link. It is per clip and opt-in: nothing leaves the building until someone
+presses it. The continuous recording is never uploaded at all — a gym produces
+~43 GB of buffer a day against maybe 3 GB of saved clips, and only the clips
+are worth anything to anyone.
+
+The upload is the **original**, not a re-encode, so the link plays exactly what
+the camera's encoder produced. That costs upload time: about 4 minutes for a
+300 MB clip on a 10 Mbps uplink, longer on a slower one. The queue runs one at
+a time on purpose — two 300 MB uploads racing each other is how the gym's Wi-Fi
+gets blamed.
+
+The queue lives in `data/uploads.json` and survives reboots. A clip that was
+mid-upload when the power went out goes back in the queue rather than being
+assumed done. Failures back off (30s, 2m, 10m, 30m, 1h) and give up after 8
+attempts, showing the reason on the card.
+
+`Copy link` puts the public URL on your clipboard. Anyone with it can watch —
+there's no login on the other end. **Deleting a clip here does not unpublish an
+already shared copy**; the cloud holds its own. That's a gap worth closing
+before this is in front of paying gyms.
+
+Nothing here works until the Pi is paired (`tools/pair_device.py`). Unpaired,
+the share button is hidden and the page says so.
+
+### Deleting and keeping
+
+Select clips with the tick in the corner, then **Delete selected**. Gone means
+gone — there's no bin.
+
+The star marks a clip **keep**, and a kept clip refuses to be deleted (`409`)
+until you unstar it. Select-all-then-delete is the normal way to clear a month
+of noise, and the star is what stops the one clip that mattered from going with
+it. The list lives in `data/keep.json`.
+
+---
+
 ## Duplicate presses
 
 The moment a press is accepted, the endpoint closes for **30 seconds**. Every
@@ -356,6 +438,12 @@ The shared secret travels in plaintext over HTTP. It prevents accidental
 triggers, not a determined attacker already on your Wi-Fi. That's a reasonable
 trade for a gym LAN. (The cloud product's device-pairing model replaces this
 shared secret with one key per Pi — see the root README's roadmap.)
+
+`ADMIN_PASSWORD` guards the manage page: deleting clips and changing the clip
+window. Leave it unset and it falls back to the button key, which is the same
+string compiled into the ESP32 sketch — fine for a first bring-up, wrong for a
+gym you don't own. `/health` reports `admin_shares_button_key: true` while
+that's the case, so you can see it from across the room.
 
 ---
 
