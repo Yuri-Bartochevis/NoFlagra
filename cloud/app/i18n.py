@@ -228,7 +228,7 @@ TRANSLATIONS = {
         "button_photo_h": "O botão fica na parede, não no seu bolso",
         "button_photo_p": (
             "Câmera no alto, botão na altura da mão, o resto escondido. Quem "
-            "acabou de levar a finalização aperta na saída do tatame — sem "
+            "acabou de dar a finalização aperta na saída do tatame — sem "
             "celular no chão, sem pedir pra ninguém filmar."
         ),
         "legal_updated": "Atualizado em",
@@ -525,8 +525,8 @@ TRANSLATIONS = {
         "button_photo_h": "The button lives on the wall, not in your pocket",
         "button_photo_p": (
             "Camera up high, button at hand height, everything else out of "
-            "sight. Whoever just got submitted hits it on the way off the mat "
-            "— no phone on the floor, no asking someone to film."
+            "sight. Whoever just landed the submission hits it on the way off "
+            "the mat — no phone on the floor, no asking someone to film."
         ),
         "legal_updated": "Last updated",
         "legal_back": "Back to the home page",
